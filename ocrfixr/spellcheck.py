@@ -2,7 +2,7 @@
 import re
 import string
 from pandas import DataFrame
-from nltk.tokenize import WhitespaceTokenizer
+from nltk.tokenize import WhitespaceTokenizer, RegexpTokenizer
 from transformers import pipeline
 from spellchecker import SpellChecker
 
@@ -21,6 +21,12 @@ class spellcheck:
 ### DEFINE ALL HELPER FUNCTIONS
 # ------------------------------------------------------
 # Find all mispelled words in a passage.
+
+    def _SPLIT_PARAGRAPHS(self, text):
+        # Separate string into paragraphs - this keeps local context for BERT, just in smaller chunks 
+        # If needed, split up excessively long paragraphs - BERT model errors out when >512 words, so break long paragraphs at 500 words
+        tokens = RegexpTokenizer('[^\n]+\n{0,}|(?:\w+\s+[^\n]){500}').tokenize(text)
+        return(tokens)
  
 
     def _LIST_MISREADS(self):
@@ -33,7 +39,6 @@ class spellcheck:
         no_caps = [x for x in no_hyphens if regex.match(x)]
         # then, remove punct from each remaining token (such as trailing commas, periods, quotations ('' & ""), but KEEPING contractions). 
         no_punctuation = [l.strip(string.punctuation) for l in no_caps]
-        #no_punctuation = [l.translate(str.maketrans('', '', string.punctuation)) for l in no_caps]
         okay_items = no_punctuation
         # test1 for tokenizer: "'I'm not sure', Adam said. 'I can't see it. The wind-n\ow is half-shut.'" --- should result in no spell.unknowns << CORRECT >>
         # test2 for tokenizer: "Hello, I'm a maile model." --- should result in "maile" being flagged. << CORRECT >>
@@ -48,6 +53,10 @@ class spellcheck:
         pyspell_suggest = spell.candidates(text)
         suggested_words = list(pyspell_suggest)
         return(suggested_words)
+    
+    # NOTE: This is really slow, and is surprisingly the major bottleneck for speed
+    # TODO: Re-implement generation of spellcheck candidates (find new package?)
+    
     
     
     # Suggest a set of the 15 words that best fit given the context of the misread
@@ -122,9 +131,8 @@ class spellcheck:
         return(fixes)
     
     
-    
-    # Final OCR contextual spellchecker
-    def replace(self):
+    # Define method for fixing a single string - note: the final function will fragment long strings into paragraphs
+    def SINGLE_STRING_FIX(self):
         misreads = self._LIST_MISREADS()
         
         # if no misreads, just return the original text
@@ -140,8 +148,16 @@ class spellcheck:
             else:
                 correction = self._MULTI_REPLACE(fixes)
                 return(correction)
+    # TODO - re-define the return_fixes debug option - should collapse all into a single dict
 
 
+    # Final OCR contextual spellchecker
+    def replace(self):
+        open_list = []
+        for i in self._SPLIT_PARAGRAPHS(self.text):
+            open_list.append(spellcheck(i).SINGLE_STRING_FIX())
+        final_text = ''.join(open_list)
+        return(final_text)
 
 
 
