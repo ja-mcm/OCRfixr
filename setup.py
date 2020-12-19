@@ -1,20 +1,6 @@
 #!/usr/bin/env python
 
-"""The setup script."""
-
-from setuptools import setup, find_packages
-
-with open('README.md') as readme_file:
-    readme = readme_file.read()
-
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
-
-requirements = ['Click>=7.0', ]
-
-setup_requirements = [ ]
-
-test_requirements = [ ]
+from distutils.core import setup
 
 setup(
     author="Jack McMahon",
@@ -37,16 +23,12 @@ setup(
             'ocrfixr=ocrfixr.cli:main',
         ],
     },
-    install_requires=requirements,
+    install_requires=['nltk','pandas', 'transformers', 'spellchecker'],
     license="GNU General Public License v3",
-    long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords=['ocrfixr','spellcheck', 'OCR', 'contextual', 'BERT'],
     name='ocrfixr',
-    packages=find_packages(include=['ocrfixr', 'ocrfixr.*']),
-    setup_requires=setup_requirements,
     test_suite='tests',
-    tests_require=test_requirements,
     url='https://github.com/ja-mcm/ocrfixr',
     version='0.1.0',
     zip_safe=False,

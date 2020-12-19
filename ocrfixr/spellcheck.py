@@ -74,9 +74,10 @@ class spellcheck:
         
     # Create [MASK] objects for each misspelling in the sentence. If the same word is misspelled multiple times, only [MASK] the first one.
     def __SET_MASK(self, orig_word, replacement, orig_text):
-        updated_text = re.sub(str(orig_word), str(replacement), orig_text, count = 1, flags=re.IGNORECASE)
+        updated_text = orig_text.replace(str(orig_word), str(replacement), 1)
         return(updated_text)
-            
+    # TODO - need the misspelling (orig_word) to be case-appropriate. pyspellcheck does not do this, so I will need to find another package to replace spell.unknown/spell.candidates
+    
     
     # note that multi-replace will replace ALL instances of a mispell, not just the first one (ie. spell-check is NOT instance-specific to each mispell, it is misspell-specific). Therefore, it should be run sentence-by-sentence to limit potential issues.
     def _MULTI_REPLACE(self, fixes):
@@ -148,7 +149,7 @@ class spellcheck:
             else:
                 correction = self._MULTI_REPLACE(fixes)
                 return(correction)
-    # TODO - re-define the return_fixes debug option - should collapse all into a single dict
+    # TODO - re-define the return_fixes debug option - should collapse all into a single dict. This probably should also be a second object that is returned in a single function call, since it isn't a big object, and would save having to run the time-consuming code twice to see 1) the changed words and 2) the final result
 
 
     # Final OCR contextual spellchecker
@@ -161,15 +162,8 @@ class spellcheck:
 
 
 
-#text = "See if you can find the rnistakes 1n this sentence on your first try."
-#text = "I am sure yov will f1nd all the rnistakes in this sentence. Also, I have a rpiestion for yov..."
-
-#fix = ocrfixr.spellcheck(text).replace()
-#print(fix)
-
-
-# TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well    
-# TODO - add sentence tokenization at front end of this function, so that each sentence is evaluated separately (since find-replace is not instance-specific, it is misspell specific..."yov" will be replaced with "you" in all instances found in the text otherwise. Sentence tokenization allows for this decision to be made on a per-instance basis...roughly :) )  
+# TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text  
+# Note:  find-replace is not instance-specific, it is misspell specific..."yov" will be replaced with "you" in all instances found in the text otherwise. Paragraph tokenization allows for this decision to be made on a per-instance basis...roughly :)  
 # Note: OCRfixr ignores all words with leading uppercasing, as these are assumed to be proper nouns, which fall outside of the scope of what this approach can accomplish.
 
        

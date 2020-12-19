@@ -27,9 +27,11 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("").replace(), "")
 
 
-    def test_reunites_paragraphs(self):
+    def test_retains_paragraphs(self):
         self.assertEqual(spellcheck("The birds flevv down\n south").replace(), "The birds flew down\n south")
-        self.assertEqual(spellcheck("The birds flevv down\n\n south").replace(), "The birds flew down\n\n south")        
+        self.assertEqual(spellcheck("The birds flevv down\n\n south").replace(), "The birds flew down\n\n south")   
+        self.assertEqual(spellcheck("The birds\n flevv down south").replace(), "The birds\n flevv down south")         # context is paragraph-specific, so OCRfixr doesn't see "birds" as relevant. This is designed behavior.
+
 
 
 # Need to test for reasonable runtime across a variety of inputs
