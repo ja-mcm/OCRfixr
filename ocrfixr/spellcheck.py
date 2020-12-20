@@ -49,12 +49,18 @@ class spellcheck:
             if i not in word_set:
                 misread.append(i)
         
+        L0 = len(words_to_check)
+        L1 = len(misread)
+        
+        # throw away any paragraphs where > 30% of the words are unrecognized - this makes context-generation spotty AND likely indicates a messy post-script/footnote, or even another language. This limits trigger-happy changes to messy text.
+        if L0 < 1:
+            misread = misread
+        elif L1/L0 > 0.30 and L0 > 10:
+            misread = []
+            
         return(misread)
-    # test1 for tokenizer: "'I'm not sure', Adam said. 'I can't see it. The wind-n\ow is half-shut.'" --- should result in no misreads << CORRECT >>
-    # test2 for tokenizer: "Hello, I'm a maile model." --- should result in "maile" being flagged. << CORRECT >>
-    
-    # NEED TO: remove "3-in-a-rows" --- these help limit issues where inserts of text in foreign language is present, esp in footnotes
-    
+
+        
     
     # Return the list of possible spell-check options. These will be used to look for matches against BERT context suggestions
     def __SUGGEST_SPELLCHECK(self, text):
