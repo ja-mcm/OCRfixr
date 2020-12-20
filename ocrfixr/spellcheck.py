@@ -85,7 +85,6 @@ class spellcheck:
     def __SET_MASK(self, orig_word, replacement, orig_text):
         updated_text = orig_text.replace(str(orig_word), str(replacement), 1)
         return(updated_text)
-    # TODO - need the misspelling (orig_word) to be case-appropriate. pyspellcheck does not do this, so I will need to find another package to replace spell.unknown/spell.candidates
     
     
     # note that multi-replace will replace ALL instances of a mispell, not just the first one (ie. spell-check is NOT instance-specific to each mispell, it is misspell-specific). Therefore, it should be run on small batches of larger texts to limit potential issues.
