@@ -1,7 +1,6 @@
 """Main module."""
 import re
 import string
-from pandas import DataFrame
 from nltk.corpus import brown
 from nltk.tokenize import WhitespaceTokenizer, RegexpTokenizer
 from transformers import pipeline
@@ -75,11 +74,15 @@ class spellcheck:
     
     
     # Suggest a set of the 15 words that best fit given the context of the misread
+#    def __SUGGEST_BERT(self, text):
+#        context_suggest = unmasker(text)
+#        suggested_words = DataFrame(context_suggest).token_str
+#        return(suggested_words)
+    
     def __SUGGEST_BERT(self, text):
         context_suggest = unmasker(text)
-        suggested_words = DataFrame(context_suggest).token_str
+        suggested_words = [x.get("token_str") for x in context_suggest]
         return(suggested_words)
-    
     
     # Ensure that list items are correctly converted down without the [] 
     def __LIST_TO_STR(self, LIST):
