@@ -21,7 +21,7 @@ As written in book:
 
 | Method | Plausible Replacements |
 | --------------- | --------------- | 
-| pyspellcheck | stoic, stole, stowe, stoke, storie, stone, __store__, stove |
+| Spellcheck | stone, __store__, stoke, stove, stowe, stole, soie |
 | BERT context | market, shop, town, city, __store__, table, village, door, light, markets, surface, place, window, docks, area |
 
 Since there is match for both a plausible spellcheck replacement and that word reasonably matches the context of the sentence, OCRfixr updates the word. 
@@ -41,4 +41,5 @@ Word context is drawn from all sentences in the current paragraph, to maximize a
 
 
 ## Credits
+__TextBlob__ powers spellcheck suggestions, and __transformers__ does the heavy lifting for BERT context modelling.
 All book data comes from Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>

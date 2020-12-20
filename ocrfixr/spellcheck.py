@@ -2,13 +2,15 @@
 import re
 import string
 from pandas import DataFrame
+from nltk.corpus import brown
 from nltk.tokenize import WhitespaceTokenizer, RegexpTokenizer
 from transformers import pipeline
-from spellchecker import SpellChecker
+from textblob import Word
 
 
-spell = SpellChecker()
-#spell_cs = SpellChecker(case_sensitive = True)
+# Define dictionary of accepted words
+word_set = set(brown.words())
+
 # Set BERT to look for the 15 most likely words in position of the misspelled word
 unmasker = pipeline('fill-mask', model='bert-base-uncased', topk=15)
 
@@ -39,23 +41,30 @@ class spellcheck:
         no_caps = [x for x in no_hyphens if regex.match(x)]
         # then, remove punct from each remaining token (such as trailing commas, periods, quotations ('' & ""), but KEEPING contractions). 
         no_punctuation = [l.strip(string.punctuation) for l in no_caps]
-        okay_items = no_punctuation
-        # test1 for tokenizer: "'I'm not sure', Adam said. 'I can't see it. The wind-n\ow is half-shut.'" --- should result in no spell.unknowns << CORRECT >>
-        # test2 for tokenizer: "Hello, I'm a maile model." --- should result in "maile" being flagged. << CORRECT >>
-        misread = spell.unknown(okay_items)
+        words_to_check = no_punctuation
+        
+        # if a word is not in the master corpus from nltk, it is assumed to be a misspelling.
+        misread = []
+        for i in words_to_check:
+            if i not in word_set:
+                misread.append(i)
+        
         return(misread)
+    # test1 for tokenizer: "'I'm not sure', Adam said. 'I can't see it. The wind-n\ow is half-shut.'" --- should result in no misreads << CORRECT >>
+    # test2 for tokenizer: "Hello, I'm a maile model." --- should result in "maile" being flagged. << CORRECT >>
+    
     # NEED TO: remove "3-in-a-rows" --- these help limit issues where inserts of text in foreign language is present, esp in footnotes
-    # TODO - prevent spell.unknown from automatically lowercasing all misspellings (ex: streDgthener), as this prevents the find-replace from working
     
     
     # Return the list of possible spell-check options. These will be used to look for matches against BERT context suggestions
     def __SUGGEST_SPELLCHECK(self, text):
-        pyspell_suggest = spell.candidates(text)
-        suggested_words = list(pyspell_suggest)
+        textblob_suggest = Word(text).spellcheck()
+        suggested_words = [x[0] for x in textblob_suggest]  # textblob outputs a list of tuples - extract only the first part of the 2 element tuple (suggestion , percentage)
         return(suggested_words)
     
-    # NOTE: This is really slow, and is surprisingly the major bottleneck for speed
-    # TODO: Re-implement generation of spellcheck candidates (find new package?)
+    # NOTE: originally done via pyspellcheck spell.candidates. textblob is roughly 3x faster (checking ~40 words takes 5 seconds vs 15 seconds)
+    # textblob often suggests different corrections. Mostly, pyspellcheck seems to have more, but more tend to be gibberish words, while textblob keeps to more conventional words. This may be an issue with old texts, where words are bit more eccentric
+    # TODO - Confirm no degradation in accuracy / capability of overall spellcheck
     
     
     
@@ -79,7 +88,7 @@ class spellcheck:
     # TODO - need the misspelling (orig_word) to be case-appropriate. pyspellcheck does not do this, so I will need to find another package to replace spell.unknown/spell.candidates
     
     
-    # note that multi-replace will replace ALL instances of a mispell, not just the first one (ie. spell-check is NOT instance-specific to each mispell, it is misspell-specific). Therefore, it should be run sentence-by-sentence to limit potential issues.
+    # note that multi-replace will replace ALL instances of a mispell, not just the first one (ie. spell-check is NOT instance-specific to each mispell, it is misspell-specific). Therefore, it should be run on small batches of larger texts to limit potential issues.
     def _MULTI_REPLACE(self, fixes):
         # if there are no fixes, just return the original text
         if len(fixes) == 0 :
@@ -96,7 +105,7 @@ class spellcheck:
     def _FIND_REPLACEMENTS(self, misreads, get = "fixes"):
         SC = [] 
         mask = []
-        # for each misread, get all spellcheck suggestions from pyspellcheck
+        # for each misread, get all spellcheck suggestions from textblob
         for i in misreads:
             SC.append(self.__SUGGEST_SPELLCHECK(i))
             mask.append(self.__SET_MASK(i,'[MASK]', self.text))
