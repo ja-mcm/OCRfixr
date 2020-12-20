@@ -23,7 +23,7 @@ setup(
             'ocrfixr=ocrfixr.cli:main',
         ],
     },
-    install_requires=['nltk','pandas', 'transformers', 'spellchecker'],
+    install_requires=['nltk','pandas', 'transformers', 'TextBlob'],
     license="GNU General Public License v3",
     include_package_data=True,
     keywords=['ocrfixr','spellcheck', 'OCR', 'contextual', 'BERT'],
