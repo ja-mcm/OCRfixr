@@ -15,9 +15,11 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', topk=15)
 
 
 class spellcheck:                       
-    def __init__(self, text, return_fixes = "F"):
+    def __init__(self, text, full_results_by_paragraph = "F", return_fixes = "F"):
         self.text = text
+        self.full_results_by_paragraph = full_results_by_paragraph
         self.return_fixes = return_fixes
+
         
 ### DEFINE ALL HELPER FUNCTIONS
 # ------------------------------------------------------
@@ -110,7 +112,7 @@ class spellcheck:
     
     
     # Creates a dict of valid replacements for misspellings. If bert and pyspellcheck do not have a match for a given misspelling, it makes no changes to the word.
-    def _FIND_REPLACEMENTS(self, misreads, get = "fixes"):
+    def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
         mask = []
         # for each misread, get all spellcheck suggestions from textblob
@@ -155,17 +157,17 @@ class spellcheck:
         
         # if no misreads, just return the original text
         if len(misreads) == 0:
-            return(self.text)
+            unchanged_text = [self.text, {}]
+            return(unchanged_text)
         
         # otherwise, look for candidates for replacement and 
         # Based on user input, either outputs the full corrected text, or simply list the misreads + their fixes (if found)
         else:
             fixes = self._FIND_REPLACEMENTS(misreads)
-            if self.return_fixes == "T":
-                return(fixes)
-            else:
-                correction = self._MULTI_REPLACE(fixes)
-                return(correction)
+            correction = self._MULTI_REPLACE(fixes)
+            full_results = [correction, fixes]
+            return(full_results)
+
     # TODO - re-define the return_fixes debug option - should collapse all into a single dict. This probably should also be a second object that is returned in a single function call, since it isn't a big object, and would save having to run the time-consuming code twice to see 1) the changed words and 2) the final result
 
 
@@ -173,9 +175,27 @@ class spellcheck:
     def replace(self):
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i).SINGLE_STRING_FIX())
-        final_text = ''.join(open_list)
-        return(final_text)
+            open_list.append(spellcheck(i).SINGLE_STRING_FIX())  
+        
+        if self.full_results_by_paragraph == "T":
+            return(open_list)
+        else:
+            # collapse all corrected paragraphs
+            corrections = [x[0] for x in open_list]
+            corrected_text = []
+            for i in corrections:
+                corrected_text.append(i)
+            final_text = ''.join(corrected_text)
+            
+            if self.return_fixes == "T":
+                # collapse all spell corrections into a single dict
+                fixes = [x[1] for x in open_list]
+                word_changes = dict(j for i in fixes for j in i.items())
+                # package up corrected text with the dict of word changes
+                full_results = [final_text, word_changes]
+                return(full_results)
+            else:
+                return(final_text)
 
 
 

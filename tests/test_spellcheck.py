@@ -37,6 +37,10 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("The birds flevv down\n\n south").replace(), "The birds flew down\n\n south")   
         self.assertEqual(spellcheck("The birds\n flevv down south").replace(), "The birds\n flevv down south")         # context is paragraph-specific, so OCRfixr doesn't see "birds" as relevant. This is designed behavior.
 
+    def test_return_fixes_flag(self):
+        self.assertEqual(spellcheck("The birds flevv down\n south",return_fixes = "T").replace(), ["The birds flew down\n south",{"flevv":"flew"}])
+        self.assertEqual(spellcheck("The birds flevv down\n south and were quikly apprehended",return_fixes = "T").replace(), ["The birds flew down\n south and were quickly apprehended",{"flevv":"flew", "quikly":"quickly"}])
+
 
 # UPPERCASE - TODO
 #    def test_spellcheck_contains_uppercase(self):
