@@ -1,14 +1,16 @@
 """Main module."""
 import re
 import string
-from nltk.corpus import brown
+import importlib_resources
 from nltk.tokenize import WhitespaceTokenizer, RegexpTokenizer
 from transformers import pipeline
 from textblob import Word
 
 
-# Define dictionary of accepted words
-word_set = set(brown.words())
+ocrfixr = importlib_resources.files("ocrfixr")
+word_set = (ocrfixr / "data" / "SCOWL_50.txt").read_text().split()
+word_set = set(word_set)
+
 
 # Set BERT to look for the 15 most likely words in position of the misspelled word
 unmasker = pipeline('fill-mask', model='bert-base-uncased', topk=15)
@@ -34,8 +36,9 @@ class spellcheck:
 
     def _LIST_MISREADS(self):
         tokens = WhitespaceTokenizer().tokenize(self.text)
-        # First, drop hyphenated words, and those broken across lines
-        regex = re.compile('.*-.*')
+        # First, drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines
+        # Note: This does risk missing valid misreads, but our goal is to avoid "bad" corrections as much as possible
+        regex = re.compile(".*-.*|.*'.*|[0-9]+")
         no_hyphens = [x for x in tokens if not regex.match(x)]
         # Also, drop all items with leading caps (ie. proper nouns)
         regex = re.compile('[^A-Z][a-z0-9]{1,}')
@@ -68,23 +71,14 @@ class spellcheck:
         textblob_suggest = Word(text).spellcheck()
         suggested_words = [x[0] for x in textblob_suggest]  # textblob outputs a list of tuples - extract only the first part of the 2 element tuple (suggestion , percentage)
         return(suggested_words)
+        
     
-    # NOTE: originally done via pyspellcheck spell.candidates. textblob is roughly 3x faster (checking ~40 words takes 5 seconds vs 15 seconds)
-    # textblob often suggests different corrections. Mostly, pyspellcheck seems to have more, but more tend to be gibberish words, while textblob keeps to more conventional words. This may be an issue with old texts, where words are bit more eccentric
-    # TODO - Confirm no degradation in accuracy / capability of overall spellcheck
-    
-    
-    
-    # Suggest a set of the 15 words that best fit given the context of the misread
-#    def __SUGGEST_BERT(self, text):
-#        context_suggest = unmasker(text)
-#        suggested_words = DataFrame(context_suggest).token_str
-#        return(suggested_words)
-    
+    # Suggest a set of the 15 words that best fit given the context of the misread    
     def __SUGGEST_BERT(self, text):
         context_suggest = unmasker(text)
         suggested_words = [x.get("token_str") for x in context_suggest]
         return(suggested_words)
+    
     
     # Ensure that list items are correctly converted down without the [] 
     def __LIST_TO_STR(self, LIST):
@@ -168,7 +162,6 @@ class spellcheck:
             full_results = [correction, fixes]
             return(full_results)
 
-    # TODO - re-define the return_fixes debug option - should collapse all into a single dict. This probably should also be a second object that is returned in a single function call, since it isn't a big object, and would save having to run the time-consuming code twice to see 1) the changed words and 2) the final result
 
 
     # Final OCR contextual spellchecker

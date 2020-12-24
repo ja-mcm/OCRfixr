@@ -6,6 +6,9 @@ setup(
     author="Jack McMahon",
     author_email='OCRfixr@mcmahon.work',
     python_requires='>=3.5',
+    packages=['OCRfixr'],
+    package_dir={'OCRfixr': 'ocrfixr'},
+    package_data={'OCRfixr': ['data/*.txt']},
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
