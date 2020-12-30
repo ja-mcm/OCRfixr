@@ -37,7 +37,7 @@ class spellcheck:
     def _LIST_MISREADS(self):
         tokens = WhitespaceTokenizer().tokenize(self.text)
         # First, drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines
-        # Note: This does risk missing valid misreads, but our goal is to avoid "bad" corrections as much as possible
+        # Note: This does risk missing valid misreads, but our goal is to avoid "bad" corrections
         regex = re.compile(".*-.*|.*'.*|[0-9]+")
         no_hyphens = [x for x in tokens if not regex.match(x)]
         # Also, drop all items with leading caps (ie. proper nouns)

@@ -1,38 +1,30 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+import setuptools
 
-setup(
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="OCRfixr", # Replace with your own username
+    version="0.0.1",
     author="Jack McMahon",
-    author_email='OCRfixr@mcmahon.work',
-    python_requires='>=3.5',
-    packages=['OCRfixr'],
+    author_email="OCRfixr@mcmahon.work",
+    description="A contextual spellchecker for OCR output",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    packages=setuptools.find_packages(),
     package_dir={'OCRfixr': 'ocrfixr'},
     package_data={'OCRfixr': ['data/*.txt']},
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
     ],
-    description="Automate the boring work of manually correcting OCR output from Distributed Proofreaders' book digitization projects.",
-    entry_points={
-        'console_scripts': [
-            'ocrfixr=ocrfixr.cli:main',
-        ],
-    },
+    python_requires='>=3.6',
     install_requires=['nltk', 'transformers', 'TextBlob'],
     license="GNU General Public License v3",
     include_package_data=True,
     keywords=['ocrfixr','spellcheck', 'OCR', 'contextual', 'BERT'],
-    name='ocrfixr',
-    test_suite='tests',
     url='https://github.com/ja-mcm/ocrfixr',
-    version='0.1.0',
-    zip_safe=False,
 )
