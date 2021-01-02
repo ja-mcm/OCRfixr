@@ -2,7 +2,6 @@
 import re
 import string
 import importlib_resources
-from nltk.tokenize import WhitespaceTokenizer, RegexpTokenizer
 from transformers import pipeline
 from textblob import Word
 
@@ -13,7 +12,7 @@ word_set = set(word_set)
 
 
 # Set BERT to look for the 15 most likely words in position of the misspelled word
-unmasker = pipeline('fill-mask', model='bert-base-uncased', topk=15)
+unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=15)
 
 
 class spellcheck:                       
@@ -30,12 +29,13 @@ class spellcheck:
     def _SPLIT_PARAGRAPHS(self, text):
         # Separate string into paragraphs - this keeps local context for BERT, just in smaller chunks 
         # If needed, split up excessively long paragraphs - BERT model errors out when >512 words, so break long paragraphs at 500 words
-        tokens = RegexpTokenizer('[^\n]+\n{0,}|(?:\w+\s+[^\n]){500}').tokenize(text)
+        tokens = re.findall('[^\n]+\n{0,}|(?:\w+\s+[^\n]){500}',text)
         return(tokens)
  
 
     def _LIST_MISREADS(self):
-        tokens = WhitespaceTokenizer().tokenize(self.text)
+        tokens = self.text.split(" ")
+        tokens = [l.strip() for l in tokens] 
         # First, drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines
         # Note: This does risk missing valid misreads, but our goal is to avoid "bad" corrections
         regex = re.compile(".*-.*|.*'.*|[0-9]+")

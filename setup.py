@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="OCRfixr", # Replace with your own username
-    version="0.0.1",
+    version="0.1.0",
     author="Jack McMahon",
     author_email="OCRfixr@mcmahon.work",
     description="A contextual spellchecker for OCR output",
@@ -21,8 +21,8 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
-    install_requires=['nltk', 'transformers', 'TextBlob'],
+    python_requires='>=3.6, <3.9',
+    install_requires=['transformers', 'TextBlob', 'tensorflow>=2.0', 'importlib_resources'],
     license="GNU General Public License v3",
     include_package_data=True,
     keywords=['ocrfixr','spellcheck', 'OCR', 'contextual', 'BERT'],
