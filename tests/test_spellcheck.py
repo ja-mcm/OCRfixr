@@ -6,7 +6,18 @@ Created on Fri Dec  4 14:25:59 2020
 @author: jack
 """
 import unittest
+import time
 from ocrfixr import spellcheck
+
+# Define timing function
+def time_func(func, *args): #*args can take 0 or more 
+  start_time = time.time()
+  func(*args)
+  end_time = time.time()
+  return(end_time-start_time)
+
+def sc(text):
+    return(spellcheck(text).replace())
 
 class TestStringMethods(unittest.TestCase):
     
@@ -42,28 +53,38 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("The birds flevv down\n\n south").replace(), "The birds flew down\n\n south")   
         self.assertEqual(spellcheck("The birds\n flevv down south").replace(), "The birds\n flevv down south")         # context is paragraph-specific, so OCRfixr doesn't see "birds" as relevant. This is designed behavior.
 
+
     def test_return_fixes_flag(self):
         self.assertEqual(spellcheck("The birds flevv down\n south",return_fixes = "T").replace(), ["The birds flew down\n south",{"flevv":"flew"}])
         self.assertEqual(spellcheck("The birds flevv down\n south and were quikly apprehended",return_fixes = "T").replace(), ["The birds flew down\n south and were quickly apprehended",{"flevv":"flew", "quikly":"quickly"}])
 
 
-# UPPERCASE - TODO
-#    def test_spellcheck_contains_uppercase(self):
-#       self.assertEqual(spellcheck(......)
+    def test_spellcheck_contains_uppercase(self):
+        self.assertEqual(spellcheck("He falls ilL.").replace(), "He falls ill.")
 
 
+    def test_spellcheck_speed_acceptable(self):
+        # GOALS
+        # 0 misspells = < 0.01 seconds
+        # 1 misspell = < 0.10 seconds
+        # additional misspells "cost" the same amount of time (ie. execution scales linearly)
+        self.assertLessEqual(time_func(sc,"this text has no issues"), 0.01)
+        self.assertLessEqual(time_func(sc,"He falls ilL."), 0.2) 
+        self.assertLessEqual(time_func(sc,"I am sure yov will f1nd all the rnistakes in this sentence"), 1)
 
-# Need to test for reasonable runtime across a variety of inputs
-#    def test_spellcheck_speed_acceptable(self):
-#       TODO: 1 change = < 0.10 seconds
-#       TODO: >1 change = < 0.25 seconds
-#       TODO: 1 paragraph = 1 second
 
-# MASHUPS - TODO
+# TODO
+
+# MASHUPS
 # This one currently fails - OCRfixr sometimes mis-handles mashed up words
 #    def test_fixes_mashed_words(self):
 #       self.assertEqual(spellcheck("It seemed a long time as we sat there in the darkness waiting for the train; but it was perhaps, in fact, less than half anhour.").replace(), "It seemed a long time as we sat there in the darkness waiting for the train; but it was perhaps, in fact, less than half an hour.")
-     
+
+# EXTRA SPACES
+# This one currently fails - OCRfixr doesn't see the relevant character due to the extra space, and duplicates it
+#    def test_fixes_extra_spaces(self):
+#       self.assertEqual(spellcheck("But suppose I spare your lif e--will you help me to escape?").replace(), "But suppose I spare your life--will you help me to escape?")
+
 
 
 
