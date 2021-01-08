@@ -7,7 +7,7 @@ from textblob import Word
 
 
 ocrfixr = importlib_resources.files("ocrfixr")
-word_set = (ocrfixr / "data" / "SCOWL_50.txt").read_text().split()
+word_set = (ocrfixr / "data" / "SCOWL_70.txt").read_text().split()
 word_set = set(word_set)
 
 
@@ -34,7 +34,7 @@ class spellcheck:
  
 
     def _LIST_MISREADS(self):
-        tokens = self.text.split(" ")
+        tokens = re.split("[ \n]", self.text)
         tokens = [l.strip() for l in tokens] 
         # First, drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines
         # Note: This does risk missing valid misreads, but our goal is to avoid "bad" corrections
