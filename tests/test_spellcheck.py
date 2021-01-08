@@ -13,6 +13,11 @@ class TestStringMethods(unittest.TestCase):
     def test_finds_misreads(self):
         self.assertEqual(spellcheck("Hello, I'm a maile model.")._LIST_MISREADS(), ['maile'])
         self.assertEqual(spellcheck("'I'm not sure', Adam said. 'I can't see it. The wind-n\ow is half-shut.'")._LIST_MISREADS(), [])
+    
+    
+    def test_ignore_words(self):
+       self.assertEqual(spellcheck("I don't understand your aceent", ignore_words = ['aceent'])._LIST_MISREADS(), [])
+       self.assertEqual(spellcheck("I don't understand your aceent")._LIST_MISREADS(), ['aceent'])
 
     
     def test_returns_orig_text_if_no_errors(self):

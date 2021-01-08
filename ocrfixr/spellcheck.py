@@ -16,10 +16,11 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=15)
 
 
 class spellcheck:                       
-    def __init__(self, text, full_results_by_paragraph = "F", return_fixes = "F"):
+    def __init__(self, text, full_results_by_paragraph = "F", return_fixes = "F", ignore_words = None):
         self.text = text
         self.full_results_by_paragraph = full_results_by_paragraph
         self.return_fixes = return_fixes
+        self.ignore_words = ignore_words or []
 
         
 ### DEFINE ALL HELPER FUNCTIONS
@@ -47,10 +48,12 @@ class spellcheck:
         no_punctuation = [l.strip(string.punctuation) for l in no_caps]
         words_to_check = no_punctuation
         
-        # if a word is not in the master corpus from nltk, it is assumed to be a misspelling.
+        # if a word is not in the SCOWL 70 word list (or the user-supplied ignore_words), it is assumed to be a misspelling.
+        full_word_set = word_set.union(set(self.ignore_words))
+        
         misread = []
         for i in words_to_check:
-            if i not in word_set:
+            if i not in full_word_set:
                 misread.append(i)
         
         L0 = len(words_to_check)
