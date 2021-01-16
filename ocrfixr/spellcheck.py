@@ -168,7 +168,7 @@ class spellcheck:
 
 
     # Final OCR contextual spellchecker
-    def replace(self):
+    def fix(self):
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
             open_list.append(spellcheck(i).SINGLE_STRING_FIX())  

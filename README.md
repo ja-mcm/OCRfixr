@@ -43,20 +43,20 @@ By default, OCRfixr only returns the original string, with all changes incorpora
 >>> from ocrfixr import spellcheck
 
 >>> text = "The birds flevv south"
->>> spellcheck(text).replace()
+>>> spellcheck(text).fix()
 'The birds flew south'
 ```
 
 Use __return_fixes__ to also include all corrections made to the text:
 ```python
->>> spellcheck(text, return_fixes = "T").replace()
+>>> spellcheck(text, return_fixes = "T").fix()
 ['The birds flew south', {'flevv': 'flew'}]
 ```
 
 Use __full_results_by_paragraph__ for longer texts, to break out the text & associated changes by paragraph: 
 ```python
 >>> text = "The birds flevv down\n south, but wefe quickly apprehended\n by border patrol agents"
->>> spellcheck(text, full_results_by_paragraph = "T").replace()
+>>> spellcheck(text, full_results_by_paragraph = "T").fix()
 [['The birds flew down\n', {'flevv': 'flew'}],
  [' south, but were quickly apprehended\n', {'wefe': 'were'}],
  [' by border patrol agents', {}]]
@@ -65,7 +65,7 @@ Use __full_results_by_paragraph__ for longer texts, to break out the text & asso
 Otherwise, the full text (+ any changes) will be returned in a single object:
 ```python
 >>> text = "The birds flevv down\n south, but wefe quickly apprehended\n by border patrol agents"
->>> spellcheck(text, return_fixes = "T").replace()
+>>> spellcheck(text, return_fixes = "T").fix()
 ['The birds flew down\n south, but were quickly apprehended\n by border patrol agents',
  {'flevv': 'flew', 'wefe': 'were'}]
 ```
