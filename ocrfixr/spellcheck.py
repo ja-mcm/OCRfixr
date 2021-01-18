@@ -158,7 +158,7 @@ class spellcheck:
             return(unchanged_text)
         
         # otherwise, look for candidates for replacement and 
-        # Based on user input, either outputs the full corrected text, or simply list the misreads + their fixes (if found)
+        # Based on user input, either outputs just the full corrected text, or also itemizes the changes
         else:
             fixes = self._FIND_REPLACEMENTS(misreads)
             correction = self._MULTI_REPLACE(fixes)

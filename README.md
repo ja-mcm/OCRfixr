@@ -84,5 +84,5 @@ Word context is drawn from all sentences in the current paragraph, to maximize a
 
 
 ## Credits
-__TextBlob__ powers spellcheck suggestions, and __transformers__ does the heavy lifting for BERT context modelling.
+__TextBlob__ powers spellcheck suggestions, and __transformers__ does the heavy lifting for BERT context modelling. SCOWL word list is Copyright 2000-2019 by Kevin Atkinson.
 All book data comes from Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>

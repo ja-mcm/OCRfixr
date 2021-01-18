@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Dec  4 14:25:59 2020
 
-@author: jack
-"""
 import unittest
 import time
 from ocrfixr import spellcheck
@@ -72,8 +68,7 @@ class TestStringMethods(unittest.TestCase):
         # additional misspells "cost" the same amount of time (ie. execution scales linearly)
         self.assertLessEqual(time_func(sc,"this text has no issues"), 0.01)
         self.assertLessEqual(time_func(sc,"He falls ilL."), 0.2) 
-        self.assertLessEqual(time_func(sc,"I am sure yov will f1nd all the rnistakes in this sentence"), 1)
-
+        self.assertLessEqual(time_func(sc,"I hope yov will f1nd all the rnistakes in this sentence. Otherwise, I wlll be very sad."), 1)
 
 # TODO
 
@@ -86,9 +81,6 @@ class TestStringMethods(unittest.TestCase):
 # This one currently fails - OCRfixr doesn't see the relevant character due to the extra space, and duplicates it
 #    def test_fixes_extra_spaces(self):
 #       self.assertEqual(spellcheck("But suppose I spare your lif e--will you help me to escape?").fix(), "But suppose I spare your life--will you help me to escape?")
-
-
-
 
 
 if __name__ == '__main__':
