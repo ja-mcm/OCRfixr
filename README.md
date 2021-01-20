@@ -4,7 +4,7 @@
 This project aims to automate the boring work of manually correcting OCR output from Distributed Proofreaders' book digitization projects
 
 
-## CORRECTING MISREADS
+## 1) CORRECTING MISREADS
 OCRs can sometimes mistake similar-looking characters when scanning a book. For example, "l" and "1" are easily confused, potentially causing the OCR to misread the word "learn" as "1earn".
 
 As written in book: 
@@ -83,6 +83,33 @@ Word context is drawn from all sentences in the current paragraph, to maximize a
 
 
 
+## 2) UNSPLITTING WORDS
+Sometimes, books split words across lines with a hyphen. These need to be correctly pieced back together into a single word before a new line is started.
+
+To glue words back together that are split across lines, OCRfixr checks the hyphenated word against the same word list to see if the newly reunited halves created a valid word, along with a few other rules. OCRfixr then decides if the split word needs that hyphen or not.
+
+By default, OCRfixr only returns the original string, with all changes incorporated:
+```bash
+>>> from ocrfixr import unsplit
+
+>>> text = "He saw the red pirogue, adrift and afire in the mid-\ndle of the river!"
+>>> print(text)
+'He saw the red pirogue, adrift and afire in the mid-
+dle of the river!'
+
+>>> print(unsplit(text).fix())
+'He saw the red pirogue, adrift and afire in the middle
+of the river!
+```
+
+As before, use __return_fixes__ to also include all corrections made to the text.
+
+This method does not use __full_results_by_paragraph__, as unsplit is rules-based rather than context-specific. There is no paragraph-specific context window. 
+
+
 ## Credits
-__TextBlob__ powers spellcheck suggestions, and __transformers__ does the heavy lifting for BERT context modelling. SCOWL word list is Copyright 2000-2019 by Kevin Atkinson.
-All book data comes from Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>
+
+- __TextBlob__ powers spellcheck suggestions
+- __transformers__ does the heavy lifting for BERT context modelling. 
+- SCOWL word list is Copyright 2000-2019 by Kevin Atkinson.
+- All book data comes from Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>

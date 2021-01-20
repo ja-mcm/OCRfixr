@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="OCRfixr",
-    version="1.0.0",
+    version="1.1.0",
     author="Jack McMahon",
     author_email="OCRfixr@mcmahon.work",
     description="A contextual spellchecker for OCR output",
