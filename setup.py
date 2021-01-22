@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="OCRfixr",
-    version="1.1.0",
+    version="1.1.1",
     author="Jack McMahon",
     author_email="OCRfixr@mcmahon.work",
     description="A contextual spellchecker for OCR output",
@@ -24,7 +24,6 @@ setuptools.setup(
     python_requires='>=3.6, <3.9',
     install_requires=['transformers', 'TextBlob', 'tensorflow>=2.0', 'importlib_resources'],
     license="GNU General Public License v3",
-    include_package_data=True,
     keywords=['ocrfixr','spellcheck', 'OCR', 'contextual', 'BERT'],
     url='https://github.com/ja-mcm/ocrfixr',
 )
