@@ -87,16 +87,15 @@ class unsplit:
     
     # note that multi-replace will replace ALL instances of a split word. Hyphenation is NOT context-specific, it is rule-based
     def _MULTI_REPLACE(self, fixes):
-        # if there are no fixes, just return the original text
+        #if there are no fixes, just return the original text
         if len(fixes) == 0 :
             return(self.text)
         else:
         # otherwise, replace all split words with the approved replacement word from the dict, 
         # TODO: removing optional trailing whitespace/newline after split word
-            fixes = dict((re.escape(k), v) for k, v in fixes.items()) 
-            pattern = re.compile("|".join(fixes.keys()))
-            text_corrected = pattern.sub(lambda m: fixes[re.escape(m.group(0))], self.text)
-            return(text_corrected)
+            for i, j in fixes.items():
+                text_corrected = re.sub(re.escape(i) + "(\s|\n)?", j, self.text)
+        return(text_corrected)
     
      
     def _FIND_REPLACEMENTS(self, splits):
@@ -133,4 +132,27 @@ class unsplit:
                 full_results = correction
             return(full_results)
 
+
+    # Define method for un-splitting words
+    def fix2(self):
+        split = self._LIST_SPLIT_WORDS()
+        
+        # if no split words, just return the original text, adding empty set {} if user requested return_fixes
+        if len(split) == 0:
+            if self.return_fixes == "T":
+                unchanged_text = [self.text, {}]
+            else:
+                unchanged_text = self.text
+            return(unchanged_text)
+        
+        # Based on user input, either outputs just the full corrected text, or also itemizes the changes
+        else:
+            fixes = self._FIND_REPLACEMENTS(split)
+            correction = self.replace_all(fixes)
+            
+            if self.return_fixes == "T":
+                full_results = [correction, fixes]
+            else:
+                full_results = correction
+            return(full_results)
 

@@ -102,9 +102,8 @@ class spellcheck:
             return(self.text)
         else:
         # otherwise, replace all dict entries with the approved replacement word
-            fixes = dict((re.escape(k), v) for k, v in fixes.items()) 
-            pattern = re.compile("|".join(fixes.keys()))
-            text_corrected = pattern.sub(lambda m: fixes[re.escape(m.group(0))], self.text)
+            for i, j in fixes.items():
+                text_corrected = self.text.replace(i, j)
             return(text_corrected)
     
     
