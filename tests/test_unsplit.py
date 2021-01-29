@@ -76,6 +76,11 @@ class TestStringMethods(unittest.TestCase):
        self.assertEqual(unsplit("55-\n56,").fix(), "55-56,\n")
 
 
+        
+    def test_fixes_multiple_split_words(self):
+        self.assertEqual(unsplit("'The search was re-\nsumed.\n\nThe sun was down and the tired volun-\nteers plodded on").fix(), "'The search was resumed.\n\nThe sun was down and the tired volunteers\nplodded on")
+
+
     def test_doesnt_collapse_descriptive_hyphens_on_proper_nouns(self):
         self.assertEqual(unsplit("proto-\nCorinthian").fix(), "proto-Corinthian\n")
         self.assertEqual(unsplit("Mc-\nAllister").fix(), "McAllister\n")

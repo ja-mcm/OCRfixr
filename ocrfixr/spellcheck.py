@@ -102,8 +102,9 @@ class spellcheck:
             return(self.text)
         else:
         # otherwise, replace all dict entries with the approved replacement word
+            text_corrected = self.text
             for i, j in fixes.items():
-                text_corrected = self.text.replace(i, j)
+                text_corrected = re.sub(re.escape(i), j, text_corrected)
             return(text_corrected)
     
     

@@ -92,10 +92,14 @@ class unsplit:
             return(self.text)
         else:
         # otherwise, replace all split words with the approved replacement word from the dict, 
-        # TODO: removing optional trailing whitespace/newline after split word
+            #fixes = dict((re.escape(k), v) for k, v in fixes.items()) 
+            #pattern = re.compile("|".join(fixes.keys()))
+            #text_corrected = pattern.sub(lambda m: fixes[re.escape(m.group(0))], self.text)
+            #return(text_corrected)
+            text_corrected = self.text
             for i, j in fixes.items():
-                text_corrected = re.sub(re.escape(i) + "(\s|\n)?", j, self.text)
-        return(text_corrected)
+                text_corrected = re.sub(re.escape(i) + "(\s|\n)?", j, text_corrected)
+            return(text_corrected)
     
      
     def _FIND_REPLACEMENTS(self, splits):

@@ -61,6 +61,10 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("He falls ilL.").fix(), "He falls ill.")
 
 
+    def test_fixes_multiple_errors(self):
+        self.assertEqual(spellcheck("I hope yov will f1nd all the rnistakes in this sentence. Otherwise, I wlll be very sad.").fix(), "I hope you will find all the rnistakes in this sentence. Otherwise, I will be very sad.")
+
+
     def test_spellcheck_speed_acceptable(self):
         # GOALS
         # 0 misspells = < 0.01 seconds
