@@ -27,7 +27,7 @@ class unsplit:
         tokens = re.split(" |(?<!-)\n", self.text)
         tokens = [l.strip() for l in tokens] 
         
-        # pick up anything with a -\n string in it
+        # pick up anything with a -\n string in it (except items with trailing "words" that are all numbers - these are end of page hyphens)
         regex = re.compile(".+[^-](-\n).+")
         has_newline = [x for x in tokens if regex.match(x)]
         
@@ -50,6 +50,8 @@ class unsplit:
         remove_hyphen = text.replace("-\n", "") + "\n"
         keep_hyphen = text.replace("-\n", "-") + "\n"
         unsure_hyphen = text.replace("-\n", "-*") + "\n"
+        end_pg_hyphen = text.replace("-\n", "-*\n") + " "
+
         
         
         # Define tests of "wordiness"
@@ -59,6 +61,7 @@ class unsplit:
         W2_real = W2 in word_set
         Has_proper = all([W1.istitle() == False, W2.istitle() == True])
         Has_num = any(filter(str.isdigit, W1) or filter(str.isdigit, W2))
+        End_pg = "--File" in W2 or W2.isdigit() == True
 
         # Decides whether a split word should retain its hyphen
         # To accomplish this, OCRfixr checks the hyphenated word against the accepted word list:
@@ -69,20 +72,26 @@ class unsplit:
         # - If word is NOT recognized without the hyphen, and both word halves are NOT recognized, REMOVE THE HYPHEN. These are assumed to be proper nouns.(ex: McAl-ister --> McAlister)
         #   - However, if the unrecognizable word is actually a number, then keep the hyphen (ex: 55-\n56 --> 55-56\n)
         #     OR, if the second word half is uppercased (likely a proper noun), then KEEP THE HYPHEN (ex. proto-Corinthian --> proto-Corinthian)
+        # - Lastly, if the hyphenated word is at the end of the page (the word is split across pages), then KEEP THE HYPHEN and indicate with a *. This overrides all other previous rules
+            # TODO: Also add a leading * to the first word on the following page
+            # -*\n+[0-9]?-+File:\s[0-9]+.png-+\n[A-z]+ ----> replace .png-+\n with .png-+\n*
 
-        if W0_real == True:
-            if W0_common == True:
-                return(remove_hyphen)
-            elif all([W1_real, W2_real]):
-                return(unsure_hyphen)
-            else:
-                return(remove_hyphen)
-               
-        else:    
-            if all([W1_real, W2_real]) or Has_num == True or Has_proper == True: 
-                return(keep_hyphen)
-            else:
-                return(remove_hyphen)
+        if End_pg == True:
+            return(end_pg_hyphen)
+        else:
+            if W0_real == True:
+                if W0_common == True:
+                    return(remove_hyphen)
+                elif all([W1_real, W2_real]):
+                    return(unsure_hyphen)
+                else:
+                    return(remove_hyphen)
+                   
+            else:    
+                if all([W1_real, W2_real]) or Has_num == True or Has_proper == True: 
+                    return(keep_hyphen)
+                else:
+                    return(remove_hyphen)
 
     
     # note that multi-replace will replace ALL instances of a split word. Hyphenation is NOT context-specific, it is rule-based
@@ -129,30 +138,6 @@ class unsplit:
         else:
             fixes = self._FIND_REPLACEMENTS(split)
             correction = self._MULTI_REPLACE(fixes)
-            
-            if self.return_fixes == "T":
-                full_results = [correction, fixes]
-            else:
-                full_results = correction
-            return(full_results)
-
-
-    # Define method for un-splitting words
-    def fix2(self):
-        split = self._LIST_SPLIT_WORDS()
-        
-        # if no split words, just return the original text, adding empty set {} if user requested return_fixes
-        if len(split) == 0:
-            if self.return_fixes == "T":
-                unchanged_text = [self.text, {}]
-            else:
-                unchanged_text = self.text
-            return(unchanged_text)
-        
-        # Based on user input, either outputs just the full corrected text, or also itemizes the changes
-        else:
-            fixes = self._FIND_REPLACEMENTS(split)
-            correction = self.replace_all(fixes)
             
             if self.return_fixes == "T":
                 full_results = [correction, fixes]

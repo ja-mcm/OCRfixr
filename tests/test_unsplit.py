@@ -86,6 +86,9 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(unsplit("Mc-\nAllister").fix(), "McAllister\n")
 
 
+    def test_stars_end_of_page_hyphens(self):
+        self.assertEqual(unsplit("found a by-\n-----File: 224.png---------------------------------------------------------\nstander on the scene").fix(), "found a by-*\n-----File: 224.png---------------------------------------------------------\nstander on the scene")
+
 # TODO
 
 
