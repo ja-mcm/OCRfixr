@@ -57,6 +57,15 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("The birds flevv down\n south and were quikly apprehended",return_fixes = "T").fix(), ["The birds flew down\n south and were quickly apprehended",{"flevv":"flew", "quikly":"quickly"}])
 
 
+    def test_changes_by_paragraph_flag(self):
+        self.assertEqual(spellcheck("The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents", changes_by_paragraph = "T").fix(), [["The birds flew down\n",{"flevv":"flew"}], [" south, but were quickly apprehended\n", {"bvt":"but", "wefe":"were"}]])
+        # Case - no misspells in the text
+        self.assertEqual(spellcheck("by border patrol agents", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
+        # Case - misspell in the text, but no replacement
+        self.assertEqual(spellcheck("In fact, the effect of circine on the human body\n'", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
+
+    
+        
     def test_spellcheck_contains_uppercase(self):
         self.assertEqual(spellcheck("He falls ilL.").fix(), "He falls ill.")
 

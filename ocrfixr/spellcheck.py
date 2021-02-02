@@ -16,9 +16,9 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=15)
 
 
 class spellcheck:                       
-    def __init__(self, text, full_results_by_paragraph = "F", return_fixes = "F", ignore_words = None):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None):
         self.text = text
-        self.full_results_by_paragraph = full_results_by_paragraph
+        self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
         self.ignore_words = ignore_words or []
 
@@ -154,7 +154,10 @@ class spellcheck:
         
         # if no misreads, just return the original text
         if len(misreads) == 0:
-            unchanged_text = [self.text, {}]
+            if self.changes_by_paragraph == "T":
+                unchanged_text = []
+            else:
+                unchanged_text = [self.text,{}]
             return(unchanged_text)
         
         # otherwise, look for candidates for replacement and 
@@ -162,7 +165,11 @@ class spellcheck:
         else:
             fixes = self._FIND_REPLACEMENTS(misreads)
             correction = self._MULTI_REPLACE(fixes)
-            full_results = [correction, fixes]
+            # for any text that has no updates, remove from changes_by_paragraph output
+            if self.changes_by_paragraph == "T" and len(fixes) == 0:
+                full_results = []
+            else:    
+                full_results = [correction, fixes]
             return(full_results)
 
 
@@ -171,10 +178,14 @@ class spellcheck:
     def fix(self):
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i).SINGLE_STRING_FIX())  
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph).SINGLE_STRING_FIX())  
         
-        if self.full_results_by_paragraph == "T":
-            return(open_list)
+        if self.changes_by_paragraph == "T":
+            open_list = list(filter(None, open_list))
+            if len(open_list) == 0:
+                return("NOTE: No changes made to text")
+            else:
+                return(open_list)
         else:
             # collapse all corrected paragraphs
             corrections = [x[0] for x in open_list]
@@ -195,7 +206,9 @@ class spellcheck:
 
 
 
-# TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text  
+# TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
+# TODO - need to ignore the first word of a new page, since these can be split words across pages
+# TODO - remove odd find-replaces that end up inserting the same word back in again ----->  ['adjustment of the dress, the hair, &c., in which\n', {'c': 'c'}]]
 # Note:  find-replace is not instance-specific, it is misspell specific..."yov" will be replaced with "you" in all instances found in the text otherwise. Paragraph tokenization allows for this decision to be made on a per-instance basis...roughly :)  
 # Note: OCRfixr ignores all words with leading uppercasing, as these are assumed to be proper nouns, which fall outside of the scope of what this approach can accomplish.
 

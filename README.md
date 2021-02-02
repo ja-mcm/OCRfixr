@@ -53,22 +53,14 @@ Use __return_fixes__ to also include all corrections made to the text:
 ['The birds flew south', {'flevv': 'flew'}]
 ```
 
-Use __full_results_by_paragraph__ for longer texts, to break out the text & associated changes by paragraph: 
+For longer texts, use __changes_by_paragraph__ to show each change in local context. This will only display the paragraphs that had updates made to them, for ease of review: 
 ```python
->>> text = "The birds flevv down\n south, but wefe quickly apprehended\n by border patrol agents"
->>> spellcheck(text, full_results_by_paragraph = "T").fix()
-[['The birds flew down\n', {'flevv': 'flew'}],
- [' south, but were quickly apprehended\n', {'wefe': 'were'}],
- [' by border patrol agents', {}]]
+>>> text = "The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents"
+>>> spellcheck(text, changes_by_paragraph = "T").fix()
+[["The birds flew down\n",{"flevv":"flew"}], 
+[" south, but were quickly apprehended\n", {"bvt":"but", "wefe":"were"}]]
 ```
 
-Otherwise, the full text (+ any changes) will be returned in a single object:
-```python
->>> text = "The birds flevv down\n south, but wefe quickly apprehended\n by border patrol agents"
->>> spellcheck(text, return_fixes = "T").fix()
-['The birds flew down\n south, but were quickly apprehended\n by border patrol agents',
- {'flevv': 'flew', 'wefe': 'were'}]
-```
 _(Note: OCRfixr resets its BERT context window at the start of each new paragraph, so splitting by paragraph may be a useful debug feature)_
 
 
