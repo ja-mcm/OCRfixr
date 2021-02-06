@@ -2,8 +2,10 @@
 import re
 import string
 import importlib_resources
+import tkinter as tk
 from transformers import pipeline
 from textblob import Word
+from tkinter import ttk
 
 
 ocrfixr = importlib_resources.files("ocrfixr")
@@ -16,11 +18,12 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=15)
 
 
 class spellcheck:                       
-    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F"):
         self.text = text
         self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
         self.ignore_words = ignore_words or []
+        self.interactive = interactive
 
         
 ### DEFINE ALL HELPER FUNCTIONS
@@ -108,6 +111,58 @@ class spellcheck:
             return(text_corrected)
     
     
+    def ___INSERT_NEWLINES(self, string):
+        return(re.sub("([^\n]{64})", "\\1\n", string, 0, re.DOTALL))
+    
+    
+    def _CREATE_DIALOGUE(self, context, old_word, new_word):
+    
+        def ___PRESS_IGNORE():
+            global proceed
+            proceed = False
+            root.destroy()
+            ### TODO - add IGNORE ALL for repeated misreads of the same word (>2 times in text)
+            
+        def ___PRESS_UPDATE():
+            global proceed
+            proceed = True
+            root.destroy()    
+            
+        root = tk.Tk()
+        root.title('Spellcheck Suggestion') 
+        
+        content = ttk.Frame(root, padding=(3,3,12,15))
+        frame = ttk.Frame(content, borderwidth=5, relief="ridge", width=500, height=75)
+        context = ttk.Label(content, text=self.___INSERT_NEWLINES(context))
+        intro = ttk.Label(content, text="Found possible replacement for:")
+        old_entry = ttk.Label(content, text=old_word,font = ('arial', 18, 'bold'))
+        suggest = ttk.Label(content, text="Suggested:")
+        new_entry = ttk.Label(content, text=new_word, font = ('arial', 18, 'bold'))
+        update = ttk.Button(content, text="Update", command = ___PRESS_UPDATE)
+        ignore = ttk.Button(content, text="Ignore", command = ___PRESS_IGNORE)
+        
+        content.grid(column=0, row=0, sticky=(tk.N, tk.S, tk.E, tk.W))
+        frame.grid(column=0, row=0, columnspan=3, rowspan=5, sticky=(tk.N, tk.S, tk.E, tk.W))
+        context.grid(column=0, row=0, sticky=(tk.N, tk.S, tk.E, tk.W), pady=5, padx=5)
+        intro.grid(column=3, row=0, columnspan=2, sticky=(tk.N, tk.W), padx=5)
+        old_entry.grid(column=3, row=1, columnspan=2, sticky=(tk.N,tk.E,tk.W), pady=5, padx=5)
+        suggest.grid(column=3, row=2, columnspan=2, sticky=(tk.N, tk.S, tk.E, tk.W), padx=5)
+        new_entry.grid(column=3, row=3, columnspan=2, sticky=(tk.N, tk.S, tk.E, tk.W), pady=5, padx=5)
+        update.grid(column=3, row=5)
+        ignore.grid(column=4, row=5)
+        
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(0, weight=1)
+        content.columnconfigure(0, weight=3)
+        content.columnconfigure(1, weight=3)
+        content.columnconfigure(2, weight=3)
+        content.columnconfigure(3, weight=1)
+        content.columnconfigure(4, weight=1)
+        content.rowconfigure(1, weight=1)
+        
+        root.mainloop()
+        
+        
     # Creates a dict of valid replacements for misspellings. If bert and pyspellcheck do not have a match for a given misspelling, it makes no changes to the word.
     def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
@@ -133,13 +188,27 @@ class spellcheck:
             corr.append(overlap)
             # if there is a single word that is both in context and pyspellcheck - update with that word
             if len(overlap) == 1:
-                corr[x] = self.__LIST_TO_STR(corr[x])
+                corr[x] = self.__LIST_TO_STR(corr[x])                
             # if no overlapping candidates OR > 1 candidate, keep misread as is
             else:
                 corr[x] = ""
             x = x+1
     
         fixes = dict(zip(misreads, corr))
+        
+        if self.interactive == "T":
+            for key, value in fixes.items():
+                
+                #### ----> INSERT interactive FUNCTION HERE
+                # create dialogue box containing: context, old_word, new_word
+                # if user selects IGNORE, then just return "", which means no replacement is made
+                # otherwise, the suggested change is retained in the fixes dict
+                
+                self._CREATE_DIALOGUE(self.text, key, value)
+                if proceed == False:
+                    no_fix = {key: ""}
+                    fixes.update(no_fix)
+
         # Remove all dict entries with "" values (ie. no suggested change)
         for key in list(fixes.keys()):
             if fixes[key] == "":
@@ -160,7 +229,7 @@ class spellcheck:
                 unchanged_text = [self.text,{}]
             return(unchanged_text)
         
-        # otherwise, look for candidates for replacement and 
+        # otherwise, look for candidates for replacement and update text where plausible matches are found
         # Based on user input, either outputs just the full corrected text, or also itemizes the changes
         else:
             fixes = self._FIND_REPLACEMENTS(misreads)
@@ -173,12 +242,11 @@ class spellcheck:
             return(full_results)
 
 
-
     # Final OCR contextual spellchecker
     def fix(self):
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph).SINGLE_STRING_FIX())  
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive).SINGLE_STRING_FIX())  
         
         if self.changes_by_paragraph == "T":
             open_list = list(filter(None, open_list))
