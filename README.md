@@ -64,6 +64,28 @@ For longer texts, use __changes_by_paragraph__ to show each change in local cont
 _(Note: OCRfixr resets its BERT context window at the start of each new paragraph, so splitting by paragraph may be a useful debug feature)_
 
 
+### Interactive Mode
+OCRfixr also has an option for the user to interactively accept/reject suggested changes to the text:
+
+```python
+>>> text = "The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents"
+>>> spellcheck(text, interactive = "T").fix()
+```
+
+<img width="723" alt="Suggestion 1" src="https://user-images.githubusercontent.com/67446041/107133270-7918c300-68b4-11eb-9de5-5b6282510c16.png">
+
+Each suggestion provides the local context around the garbled text, so that the user can determine if the suggestion fits.
+
+<img width="723" alt="Suggestion 2" src="https://user-images.githubusercontent.com/67446041/107133306-da409680-68b4-11eb-8a4c-69a8e034775c.png">
+
+```python
+>>> ### User accepts change to "flevv", but rejects change to "quikly" in GUI
+'The birds flew down\n south and were quikly apprehended'
+```
+
+This returns the text with all accepted changes reflected. All rejected suggestions are left as-is in the text.
+
+
 ### Avoiding "Damn You, Autocorrect!"
 By design, OCRfixr is change-averse:
 - If spellcheck/context do not line up, no update is made.
