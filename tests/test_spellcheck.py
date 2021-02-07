@@ -22,6 +22,7 @@ class TestStringMethods(unittest.TestCase):
     def test_finds_misreads(self):
         self.assertEqual(spellcheck("Hello, I'm a maile model.")._LIST_MISREADS(), ['maile'])
         self.assertEqual(spellcheck("'I'm not sure', Adam said. 'I can't see it. The wind-n\ow is half-shut.'")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("income which represented the capital.1 And the")._LIST_MISREADS(), [])
     
     
     def test_ignore_words(self):

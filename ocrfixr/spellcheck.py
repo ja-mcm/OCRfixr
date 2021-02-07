@@ -39,15 +39,21 @@ class spellcheck:
     def _LIST_MISREADS(self):
         tokens = re.split("[ \n]", self.text)
         tokens = [l.strip() for l in tokens] 
-        # First, drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines
+        
+        # Drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines
         # Note: This does risk missing valid misreads, but our goal is to avoid "bad" corrections
-        regex = re.compile(".*-.*|.*'.*|[0-9]+")
-        no_hyphens = [x for x in tokens if not regex.match(x)]
         # Also, drop all items with leading caps (ie. proper nouns)
-        regex = re.compile('[^A-Z][a-z0-9]{1,}')
-        no_caps = [x for x in no_hyphens if regex.match(x)]
+        # Also, drop all words with trailing numbers flanked by punctuation, indicating a footnote reference (money.4, item[1]) rather than a misspelling
+        # Also, drop any 1-character "words" 
+
+        no_hyphens = re.compile(".*-.*|.*'.*|[0-9]+")
+        no_caps = re.compile('[^A-Z][a-z0-9]{1,}')
+        no_footnotes = re.compile('.*[0-9]{1,}[\]|)]?$')
+        
+        words = [x for x in tokens if not no_hyphens.match(x) and no_caps.match(x) and not no_footnotes.match(x) and len(x) > 1]
+
         # then, remove punct from each remaining token (such as trailing commas, periods, quotations ('' & ""), but KEEPING contractions). 
-        no_punctuation = [l.strip(string.punctuation) for l in no_caps]
+        no_punctuation = [l.strip(string.punctuation) for l in words]
         words_to_check = no_punctuation
         
         # if a word is not in the SCOWL 70 word list (or the user-supplied ignore_words), it is assumed to be a misspelling.
@@ -198,6 +204,16 @@ class spellcheck:
     
         fixes = dict(zip(misreads, corr))
         
+        # Remove all dict entries with "" values (ie. no suggested change)
+        for key in list(fixes.keys()):
+            if fixes[key] == "":
+                del fixes[key]
+        
+        # Remove all dict entries where replacement is same as initial problematic text
+        keys = [k for k, v in fixes.items() if k == v]
+        for x in keys:
+            del fixes[x]
+                
         if self.interactive == "T":
             for key, value in fixes.items():
                 
@@ -275,11 +291,17 @@ class spellcheck:
                 return(final_text)
 
 
-
-# TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
-# TODO - need to ignore the first word of a new page, since these can be split words across pages
+# TODO - make tkinter play nicely with CLI python
+# TODO - add common_scannos feature, which automatically adds a set of specific common scannos to find-replace (such as 'tle' --> 'the'), completely bypassing the BERT context check step (as well as the lower-case only requirement). These need to be words that COULDN'T mean anything else.
+# TODO - add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
+# TODO - likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
+# TODO - add top_k feature, which allows user to broaden the acceptable BERT context check. So, for higher k value, less-likely context candidates are included, increasing the number of fix suggestions but also possibly false positives (this is most useful in combination with using interactive review)
+# TODO - need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 # TODO - remove odd find-replaces that end up inserting the same word back in again ----->  ['adjustment of the dress, the hair, &c., in which\n', {'c': 'c'}]]
-# Note:  find-replace is not instance-specific, it is misspell specific..."yov" will be replaced with "you" in all instances found in the text otherwise. Paragraph tokenization allows for this decision to be made on a per-instance basis...roughly :)  
+# TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
+
+
+# Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph
 # Note: OCRfixr ignores all words with leading uppercasing, as these are assumed to be proper nouns, which fall outside of the scope of what this approach can accomplish.
 
        
