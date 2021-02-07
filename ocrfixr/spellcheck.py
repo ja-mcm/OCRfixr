@@ -2,10 +2,9 @@
 import re
 import string
 import importlib_resources
-import tkinter as tk
 from transformers import pipeline
 from textblob import Word
-from tkinter import ttk
+
 
 
 ocrfixr = importlib_resources.files("ocrfixr")
@@ -116,7 +115,10 @@ class spellcheck:
     
     
     def _CREATE_DIALOGUE(self, context, old_word, new_word):
-    
+        
+        import tkinter as tk
+        from tkinter import ttk
+        
         def ___PRESS_IGNORE():
             global proceed
             proceed = False
