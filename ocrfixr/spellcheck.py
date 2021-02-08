@@ -1,6 +1,7 @@
 """Main module."""
 import re
 import string
+import ast
 import importlib_resources
 from transformers import pipeline
 from textblob import Word
@@ -10,6 +11,9 @@ from textblob import Word
 ocrfixr = importlib_resources.files("ocrfixr")
 word_set = (ocrfixr / "data" / "SCOWL_70.txt").read_text().split()
 word_set = set(word_set)
+common_scannos = (ocrfixr / "data" / "common_scannos.txt").read_text()
+common_scannos = ast.literal_eval(common_scannos)
+
 
 
 # Set BERT to look for the 15 most likely words in position of the misspelled word
@@ -17,12 +21,13 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=15)
 
 
 class spellcheck:                       
-    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F"):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "F"):
         self.text = text
         self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
         self.ignore_words = ignore_words or []
         self.interactive = interactive
+        self.common_scannos = common_scannos
 
         
 ### DEFINE ALL HELPER FUNCTIONS
@@ -34,8 +39,8 @@ class spellcheck:
         # If needed, split up excessively long paragraphs - BERT model errors out when >512 words, so break long paragraphs at 500 words
         tokens = re.findall('[^\n]+\n{0,}|(?:\w+\s+[^\n]){500}',text)
         return(tokens)
- 
 
+    
     def _LIST_MISREADS(self):
         tokens = re.split("[ \n]", self.text)
         tokens = [l.strip() for l in tokens] 
@@ -58,6 +63,7 @@ class spellcheck:
         
         # if a word is not in the SCOWL 70 word list (or the user-supplied ignore_words), it is assumed to be a misspelling.
         full_word_set = word_set.union(set(self.ignore_words))
+        
         
         misread = []
         for i in words_to_check:
@@ -129,13 +135,16 @@ class spellcheck:
             global proceed
             proceed = False
             root.destroy()
-            ### TODO - add IGNORE ALL for repeated misreads of the same word (>2 times in text)
+            ### TODO - add IGNORE ALL for repeated misreads of the same word (>2 times in text) - should only ask ONCE
             
         def ___PRESS_UPDATE():
             global proceed
             proceed = True
             root.destroy()    
-            
+            ### TODO - add ACCEPT ALL for repeated misreads of the same word (>2 times in text) - should only ask ONCE
+            ### TODO - create exit-valve from interactive mode, where user can stop generation of pop-up windows. This should cancel all further updates to the text.
+
+
         root = tk.Tk()
         root.title('Spellcheck Suggestion') 
         
@@ -172,14 +181,25 @@ class spellcheck:
         
         
     # Creates a dict of valid replacements for misspellings. If bert and pyspellcheck do not have a match for a given misspelling, it makes no changes to the word.
+    # When common_scannos is activated, these select words bypass the spellcheck/context check
     def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
         mask = []
+        additional_changes = {}
+        
         # for each misread, get all spellcheck suggestions from textblob
+        # TODO - skip the BERT check step if no spellcheck suggestion exists for a given word, since we'll never use the BERT output in that case
+        
         for i in misreads:
-            SC.append(self.__SUGGEST_SPELLCHECK(i))
-            mask.append(self.__SET_MASK(i,'[MASK]', self.text))
-            # for each misread, get all context suggestions from bert
+            if self.common_scannos == "T" and i in common_scannos:
+                # if misread is a common scanno, then add that entry to a separate dict that will be merged back in later. This bypasses the BERT check step.
+                add_scanno = dict((k, v) for k, v in common_scannos.items() if k in i)
+                additional_changes.update(add_scanno)
+            else:
+                # otherwise, do the spellcheck + context check
+                SC.append(self.__SUGGEST_SPELLCHECK(i))
+                mask.append(self.__SET_MASK(i,'[MASK]', self.text))
+        # for each misread, get all context suggestions from bert
         bert = []
         for b in mask:
             bert.append(self.__SUGGEST_BERT(b))
@@ -187,6 +207,9 @@ class spellcheck:
             # then, see if spellcheck & bert overlap
             # if they do, set that value for the find-replace dict
             # if they do not, then keep the original misspelling in the find-replace dict (ie. make no changes to that word)
+            # if user indicated "common_scannos" = T, AND the word is in the common scanno list, then ignore the BERT context match step - common scannos will always get a find-replace, since they are in theory unambiguously tied to only one possible correct value
+                   
+            
             
         corr = []
         fixes = []
@@ -203,6 +226,7 @@ class spellcheck:
             x = x+1
     
         fixes = dict(zip(misreads, corr))
+        fixes.update(additional_changes)
         
         # Remove all dict entries with "" values (ie. no suggested change)
         for key in list(fixes.keys()):
@@ -264,7 +288,7 @@ class spellcheck:
     def fix(self):
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive).SINGLE_STRING_FIX())  
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos).SINGLE_STRING_FIX())  
         
         if self.changes_by_paragraph == "T":
             open_list = list(filter(None, open_list))
@@ -292,7 +316,8 @@ class spellcheck:
 
 
 # TODO - make tkinter play nicely with CLI python
-# TODO - add common_scannos feature, which automatically adds a set of specific common scannos to find-replace (such as 'tle' --> 'the'), completely bypassing the BERT context check step (as well as the lower-case only requirement). These need to be words that COULDN'T mean anything else.
+# TODO - can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
+# TODO - spellcheck is getting slow (unit test > 1 second for a multi-mistake sentence) - optimize steps to boost speed
 # TODO - add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
 # TODO - likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
 # TODO - add top_k feature, which allows user to broaden the acceptable BERT context check. So, for higher k value, less-likely context candidates are included, increasing the number of fix suggestions but also possibly false positives (this is most useful in combination with using interactive review)

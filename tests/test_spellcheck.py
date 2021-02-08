@@ -45,6 +45,11 @@ class TestStringMethods(unittest.TestCase):
 
     def test_handles_empty_text(self):
         self.assertEqual(spellcheck("").fix(), "")
+        
+        
+    def test_common_scannos(self):
+        self.assertEqual(spellcheck("tle", common_scannos = "T").fix(), "the")
+        self.assertEqual(spellcheck("the context makes no sense to help iito fix this scanno", common_scannos = "T").fix(), "the context makes no sense to help into fix this scanno")
 
 
     def test_retains_paragraphs(self):
@@ -64,7 +69,6 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("by border patrol agents", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
         # Case - misspell in the text, but no replacement
         self.assertEqual(spellcheck("In fact, the effect of circine on the human body\n'", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
-
     
         
     def test_spellcheck_contains_uppercase(self):
