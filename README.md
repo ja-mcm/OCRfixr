@@ -118,7 +118,7 @@ of the river!
 
 As before, use __return_fixes__ to also include all corrections made to the text.
 
-This method does not use __full_results_by_paragraph__, as unsplit is rules-based rather than context-specific. There is no paragraph-specific context window. 
+This method does not use __changes_by_paragraph__, as unsplit is rules-based rather than context-specific. There is no paragraph-specific context window. 
 
 
 ## Credits

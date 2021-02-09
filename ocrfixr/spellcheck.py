@@ -70,7 +70,13 @@ class spellcheck:
             if i not in full_word_set:
                 misread.append(i)
         
-        L0 = len(words_to_check)
+        if self.common_scannos == "T":
+            # add in common_scannos (needed for scannos with leading caps, which were dropped in the token processing step)
+            for i in tokens:
+                if i in common_scannos:
+                    misread.append(i)
+                
+        L0 = len(tokens)
         L1 = len(misread)
         
         # throw away any paragraphs where > 30% of the words are unrecognized - this makes context-generation spotty AND likely indicates a messy post-script/footnote, or even another language. This limits trigger-happy changes to messy text.
@@ -318,6 +324,7 @@ class spellcheck:
 # TODO - make tkinter play nicely with CLI python
 # TODO - can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
 # TODO - spellcheck is getting slow (unit test > 1 second for a multi-mistake sentence) - optimize steps to boost speed
+# TODO - add "stealth scanno" logic to common_scannos --- this would be based on another list of scannos that yield valid words (for example: 'arid' --> 'and', 'be' --> 'he')
 # TODO - add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
 # TODO - likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
 # TODO - add top_k feature, which allows user to broaden the acceptable BERT context check. So, for higher k value, less-likely context candidates are included, increasing the number of fix suggestions but also possibly false positives (this is most useful in combination with using interactive review)

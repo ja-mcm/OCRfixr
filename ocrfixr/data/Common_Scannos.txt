@@ -1,1 +1,9 @@
-{'tle': 'the', 'iito': 'into'}
+{'tle': 'the', 
+'Tle': 'The', 
+'tlie': 'the', 
+'Tlie': 'The',
+'tbe': 'the', 
+'The': 'The', 
+'tbis': 'this', 
+'Tbis': 'This', 
+'iito': 'into'}

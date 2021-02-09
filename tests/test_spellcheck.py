@@ -49,6 +49,7 @@ class TestStringMethods(unittest.TestCase):
         
     def test_common_scannos(self):
         self.assertEqual(spellcheck("tle", common_scannos = "T").fix(), "the")
+        self.assertEqual(spellcheck("Tle", common_scannos = "T").fix(), "The")
         self.assertEqual(spellcheck("the context makes no sense to help iito fix this scanno", common_scannos = "T").fix(), "the context makes no sense to help into fix this scanno")
 
 
