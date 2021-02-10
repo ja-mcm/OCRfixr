@@ -11,23 +11,29 @@ from textblob import Word
 ocrfixr = importlib_resources.files("ocrfixr")
 word_set = (ocrfixr / "data" / "SCOWL_70.txt").read_text().split()
 word_set = set(word_set)
+
 common_scannos = (ocrfixr / "data" / "common_scannos.txt").read_text()
 common_scannos = ast.literal_eval(common_scannos)
 
+stealth_scannos = (ocrfixr / "data" / "stealth_scannos.txt").read_text()
+stealth_scannos = ast.literal_eval(stealth_scannos)
 
 
-# Set BERT to look for the 15 most likely words in position of the misspelled word
-unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=15)
+
+# Set BERT to look for the 30 most likely words in position of the misspelled word
+unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=30)
 
 
 class spellcheck:                       
-    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "F"):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15):
         self.text = text
         self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
         self.ignore_words = ignore_words or []
         self.interactive = interactive
         self.common_scannos = common_scannos
+        self.top_k = top_k
+
 
         
 ### DEFINE ALL HELPER FUNCTIONS
@@ -45,8 +51,7 @@ class spellcheck:
         tokens = re.split("[ \n]", self.text)
         tokens = [l.strip() for l in tokens] 
         
-        # Drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines
-        # Note: This does risk missing valid misreads, but our goal is to avoid "bad" corrections
+        # Drop hyphenated words, those with apostrophes (which may be intentional slang), words that are just numbers, and words broken across lines. Note: This does risk missing valid misreads, but our goal is to avoid making "bad" corrections above all else
         # Also, drop all items with leading caps (ie. proper nouns)
         # Also, drop all words with trailing numbers flanked by punctuation, indicating a footnote reference (money.4, item[1]) rather than a misspelling
         # Also, drop any 1-character "words" 
@@ -54,27 +59,30 @@ class spellcheck:
         no_hyphens = re.compile(".*-.*|.*'.*|[0-9]+")
         no_caps = re.compile('[^A-Z][a-z0-9]{1,}')
         no_footnotes = re.compile('.*[0-9]{1,}[\]|)]?$')
-        
+
         words = [x for x in tokens if not no_hyphens.match(x) and no_caps.match(x) and not no_footnotes.match(x) and len(x) > 1]
 
         # then, remove punct from each remaining token (such as trailing commas, periods, quotations ('' & ""), but KEEPING contractions). 
         no_punctuation = [l.strip(string.punctuation) for l in words]
         words_to_check = no_punctuation
         
-        # if a word is not in the SCOWL 70 word list (or the user-supplied ignore_words), it is assumed to be a misspelling.
+        # Add ignore_words to valid word list
         full_word_set = word_set.union(set(self.ignore_words))
         
-        
+        # if a word is not in the SCOWL 70 word list (or the user-supplied ignore_words), it is assumed to be a misspelling.
         misread = []
         for i in words_to_check:
             if i not in full_word_set:
                 misread.append(i)
-        
+
+        # add scannos to misreads, if option is selected        
         if self.common_scannos == "T":
-            # add in common_scannos (needed for scannos with leading caps, which were dropped in the token processing step)
+            # add in common_scannos with leading caps (which were dropped in the token processing step)
+            # add in stealth_scanno candidates (correctly spelled words that match entries in the stealth_scanno dict) - these were also dropped in the token processing step
             for i in tokens:
-                if i in common_scannos:
+                if i not in misread and i in common_scannos or i in stealth_scannos:
                     misread.append(i)
+
                 
         L0 = len(tokens)
         L1 = len(misread)
@@ -97,9 +105,9 @@ class spellcheck:
         
     
     # Suggest a set of the 15 words that best fit given the context of the misread    
-    def __SUGGEST_BERT(self, text):
+    def __SUGGEST_BERT(self, text, number_to_return = 15):
         context_suggest = unmasker(text)
-        suggested_words = [x.get("token_str") for x in context_suggest]
+        suggested_words = [x.get("token_str") for x in context_suggest][:number_to_return]
         return(suggested_words)
     
     
@@ -187,36 +195,46 @@ class spellcheck:
         
         
     # Creates a dict of valid replacements for misspellings. If bert and pyspellcheck do not have a match for a given misspelling, it makes no changes to the word.
-    # When common_scannos is activated, these select words bypass the spellcheck/context check
+    # When common_scannos is activated, that limited list of words bypass the spellcheck/context check
     def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
         mask = []
         additional_changes = {}
         
-        # for each misread, get all spellcheck suggestions from textblob
-        # TODO - skip the BERT check step if no spellcheck suggestion exists for a given word, since we'll never use the BERT output in that case
-        
+        # for each misread, get all spellcheck suggestions
         for i in misreads:
+            # if misread is a common scanno, then add that entry to a separate dict that will be merged back in later. This bypasses the BERT check step.
             if self.common_scannos == "T" and i in common_scannos:
-                # if misread is a common scanno, then add that entry to a separate dict that will be merged back in later. This bypasses the BERT check step.
                 add_scanno = dict((k, v) for k, v in common_scannos.items() if k in i)
                 additional_changes.update(add_scanno)
-            else:
-                # otherwise, do the spellcheck + context check
-                SC.append(self.__SUGGEST_SPELLCHECK(i))
+            
+            # for stealth scannos - these are valid (yet incorrect) words. So, instead of SUGGEST_SPELLCHECK (which would return the same word supplied), take the value from the stealth_scanno dict, which is the desired word to check for in BERT context (arid --> and)
+            elif self.common_scannos == "T" and i in stealth_scannos:
+                SC.append(stealth_scannos.get(i).split(" "))
                 mask.append(self.__SET_MASK(i,'[MASK]', self.text))
+            
+            # for all other unrecognized words, get all spellcheck suggestions from textblob
+            else:
+                spellcheck = self.__SUGGEST_SPELLCHECK(i)
+                # Make sure there is a valid spellcheck suggestion (textBlob returns the original string if not)
+                if spellcheck == i:
+                    # if none, remove from misreads (ie. dont bother checking BERT context - it won't get used)
+                    misreads.delete(i)
+                else:
+                    # otherwise, do the spellcheck + context check
+                    SC.append(spellcheck)
+                    mask.append(self.__SET_MASK(i,'[MASK]', self.text))
         # for each misread, get all context suggestions from bert
         bert = []
         for b in mask:
-            bert.append(self.__SUGGEST_BERT(b))
+            bert.append(self.__SUGGEST_BERT(text = b, number_to_return = self.top_k))
     
             # then, see if spellcheck & bert overlap
             # if they do, set that value for the find-replace dict
             # if they do not, then keep the original misspelling in the find-replace dict (ie. make no changes to that word)
             # if user indicated "common_scannos" = T, AND the word is in the common scanno list, then ignore the BERT context match step - common scannos will always get a find-replace, since they are in theory unambiguously tied to only one possible correct value
-                   
             
-            
+          
         corr = []
         fixes = []
         x = 0
@@ -233,18 +251,20 @@ class spellcheck:
     
         fixes = dict(zip(misreads, corr))
         fixes.update(additional_changes)
-        
-        # Remove all dict entries with "" values (ie. no suggested change)
-        for key in list(fixes.keys()):
-            if fixes[key] == "":
-                del fixes[key]
-        
+    
+    
         # Remove all dict entries where replacement is same as initial problematic text
         keys = [k for k, v in fixes.items() if k == v]
         for x in keys:
             del fixes[x]
                 
+            
         if self.interactive == "T":
+            # Remove all dict entries with "" values (ie. no suggested change) --- this cleans up the suggestions the user sees
+            for key in list(fixes.keys()):
+                if fixes[key] == "":
+                    del fixes[key]
+                    
             for key, value in fixes.items():
                 
                 #### ----> INSERT interactive FUNCTION HERE
@@ -257,7 +277,7 @@ class spellcheck:
                     no_fix = {key: ""}
                     fixes.update(no_fix)
 
-        # Remove all dict entries with "" values (ie. no suggested change)
+        # Remove all dict entries with "" values (ie. no suggested change).
         for key in list(fixes.keys()):
             if fixes[key] == "":
                 del fixes[key]
@@ -294,7 +314,7 @@ class spellcheck:
     def fix(self):
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos).SINGLE_STRING_FIX())  
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k).SINGLE_STRING_FIX())  
         
         if self.changes_by_paragraph == "T":
             open_list = list(filter(None, open_list))
@@ -324,12 +344,10 @@ class spellcheck:
 # TODO - make tkinter play nicely with CLI python
 # TODO - can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
 # TODO - spellcheck is getting slow (unit test > 1 second for a multi-mistake sentence) - optimize steps to boost speed
-# TODO - add "stealth scanno" logic to common_scannos --- this would be based on another list of scannos that yield valid words (for example: 'arid' --> 'and', 'be' --> 'he')
 # TODO - add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
 # TODO - likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
 # TODO - add top_k feature, which allows user to broaden the acceptable BERT context check. So, for higher k value, less-likely context candidates are included, increasing the number of fix suggestions but also possibly false positives (this is most useful in combination with using interactive review)
 # TODO - need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
-# TODO - remove odd find-replaces that end up inserting the same word back in again ----->  ['adjustment of the dress, the hair, &c., in which\n', {'c': 'c'}]]
 # TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
 
 

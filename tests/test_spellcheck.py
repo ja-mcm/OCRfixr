@@ -53,6 +53,11 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("the context makes no sense to help iito fix this scanno", common_scannos = "T").fix(), "the context makes no sense to help into fix this scanno")
 
 
+    def test_stealth_scannos(self):
+        self.assertEqual(spellcheck("the fox arid the hound ran round and round", common_scannos = "T").fix(), "the fox and the hound ran round and round")
+        self.assertEqual(spellcheck("then be went to the store to buy some bread", common_scannos = "T").fix(), "then he went to the store to buy some bread")
+
+
     def test_retains_paragraphs(self):
         self.assertEqual(spellcheck("The birds flevv down\n south").fix(), "The birds flew down\n south")
         self.assertEqual(spellcheck("The birds flevv down\n\n south").fix(), "The birds flew down\n\n south")   

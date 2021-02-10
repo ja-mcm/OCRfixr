@@ -3,7 +3,7 @@
 'tlie': 'the', 
 'Tlie': 'The',
 'tbe': 'the', 
-'The': 'The', 
+'Tbe': 'The', 
 'tbis': 'this', 
 'Tbis': 'This', 
 'iito': 'into'}
