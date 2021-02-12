@@ -112,7 +112,9 @@ class spellcheck:
     def __SUGGEST_SPELLCHECK(self, text):
         suggested_words = []
         for i in sym_spell.lookup(text, Verbosity.CLOSEST, max_edit_distance=2):
-            suggested_words.append(getattr(i, "term"))
+            term = getattr(i, "term")
+            if len(term) > 1:
+                suggested_words.append(term)
         return(suggested_words)
         
     
@@ -210,20 +212,21 @@ class spellcheck:
     # When common_scannos is activated, that limited list of words bypass the spellcheck/context check
     def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
-        mask = []
-        additional_changes = {}
+        bert = []
+        common_scanno_fixes = {}
         
         # for each misread, get all spellcheck suggestions
         for i in misreads:
             # if misread is a common scanno, then add that entry to a separate dict that will be merged back in later. This bypasses the BERT check step.
             if self.common_scannos == "T" and i in common:
                 add_scanno = dict((k, v) for k, v in common_scannos.items() if k in i)
-                additional_changes.update(add_scanno)
+                common_scanno_fixes.update(add_scanno)
             
             # for stealth scannos - these are valid (yet incorrect) words. So, instead of SUGGEST_SPELLCHECK (which would return the same word supplied), take the value from the stealth_scanno dict, which is the desired word to check for in BERT context (arid --> and)
             elif self.common_scannos == "T" and i in stealth:
                 SC.append(stealth_scannos.get(i).split(" "))
-                mask.append(self.__SET_MASK(i,'[MASK]', self.text))
+                bert.append(self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
+                                                number_to_return = self.top_k))
             
             # for all other unrecognized words, get all spellcheck suggestions from textblob
             else:
@@ -235,17 +238,13 @@ class spellcheck:
                 else:
                     # otherwise, do the spellcheck + context check
                     SC.append(spellcheck)
-                    mask.append(self.__SET_MASK(i,'[MASK]', self.text))
-        # for each misread, get all context suggestions from bert
-        bert = []
-        for b in mask:
-            bert.append(self.__SUGGEST_BERT(text = b, number_to_return = self.top_k))
+                    bert.append(self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
+                                                    number_to_return = self.top_k))
     
-            # then, see if spellcheck & bert overlap
-            # if they do, set that value for the find-replace dict
-            # if they do not, then keep the original misspelling in the find-replace dict (ie. make no changes to that word)
-            # if user indicated "common_scannos" = T, AND the word is in the common scanno list, then ignore the BERT context match step - common scannos will always get a find-replace, since they are in theory unambiguously tied to only one possible correct value
-            
+        # then, see if spellcheck & bert overlap
+        # if they do, set that value for the find-replace dict
+        # if they do not, then keep the original misspelling in the find-replace dict (ie. make no changes to that word)
+        # if user indicated "common_scannos" = T AND the word is in the common scanno list, then ignore the BERT context match step - common scannos will always get a find-replace, since they are in theory unambiguously tied to only one possible correct value            
           
         corr = []
         fixes = []
@@ -262,7 +261,7 @@ class spellcheck:
             x = x+1
     
         fixes = dict(zip(misreads, corr))
-        fixes.update(additional_changes)
+        fixes.update(common_scanno_fixes)
     
     
         # Remove all dict entries where replacement is same as initial problematic text
@@ -279,7 +278,7 @@ class spellcheck:
                     
             for key, value in fixes.items():
                 
-                #### ----> INSERT interactive FUNCTION HERE
+                #### INTERACTIVE FUNCTION
                 # create dialogue box containing: context, old_word, new_word
                 # if user selects IGNORE, then just return "", which means no replacement is made
                 # otherwise, the suggested change is retained in the fixes dict
@@ -353,13 +352,12 @@ class spellcheck:
                 return(final_text)
 
 
-# TODO - prevent single letter/number replacement suggestions (see Keynes book for examples). This was introduced in the upgrade to symspellpy
-# TODO - make tkinter play nicely with CLI python
-# TODO - can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
-# TODO - add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
-# TODO - likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
-# TODO - need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
-# TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
+# TODO - (IGNORE_ALL) add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
+# TODO - (UPDATE_ALL) likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
+# TODO - (CLI_DIALOGUE_BOX) make tkinter play nicely with CLI python
+# TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
+# TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
+# TODO - (FIX_MASHED WORDS) check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
     # should be able to leverage symspells compound lookup for this!
 
 # Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph

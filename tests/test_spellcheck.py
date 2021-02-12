@@ -87,9 +87,9 @@ class TestStringMethods(unittest.TestCase):
 
     def test_spellcheck_speed_acceptable(self):
         # GOALS
-        # 0 misspells = < 0.01 seconds
-        # 1 misspell = < 0.10 seconds
-        # additional misspells "cost" the same amount of time (ie. execution scales linearly)
+        # 0 misspells = < 0.01 seconds  [V1.3 = 0.0025s]
+        # 1 misspell = < 0.10 seconds   [V1.3 = 0.070s]
+        # additional misspells "cost" the same amount of time (ie. execution scales linearly with # of misspells)  [V1.3 - this seems to hold true]
         self.assertLessEqual(time_func(sc,"this text has no issues"), 0.01)
         self.assertLessEqual(time_func(sc,"He falls ilL."), 0.2) 
         self.assertLessEqual(time_func(sc,"I hope yov will f1nd all the rnistakes in this sentence. Otherwise, I wlll be very sad."), 1)
