@@ -21,7 +21,7 @@ As written in book:
 
 | Method | Plausible Replacements |
 | --------------- | --------------- | 
-| Spellcheck (TextBlob) | stone, __store__, stoke, stove, stowe, stole, soie |
+| Spellcheck (symspellpy) | stone, __store__, stoke, stove, stowe, stole, soie |
 | Context (BERT) | market, shop, town, city, __store__, table, village, door, light, markets, surface, place, window, docks, area |
 
 Since there is match for both a plausible spellcheck replacement and that word reasonably matches the context of the sentence, OCRfixr updates the word. 
@@ -123,7 +123,7 @@ This method does not use __changes_by_paragraph__, as unsplit is rules-based rat
 
 ## Credits
 
-- __TextBlob__ powers spellcheck suggestions
+- __symspellpy__ powers spellcheck suggestions
 - __transformers__ does the heavy lifting for BERT context modelling. 
 - SCOWL word list is Copyright 2000-2019 by Kevin Atkinson.
 - All book data comes from Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>

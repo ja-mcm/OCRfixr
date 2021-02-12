@@ -4,8 +4,8 @@ import string
 import ast
 import importlib_resources
 from transformers import pipeline
-from textblob import Word
-
+from symspellpy import SymSpell, Verbosity
+import pkg_resources
 
 
 ocrfixr = importlib_resources.files("ocrfixr")
@@ -14,10 +14,21 @@ word_set = set(word_set)
 
 common_scannos = (ocrfixr / "data" / "common_scannos.txt").read_text()
 common_scannos = ast.literal_eval(common_scannos)
+common = set(common_scannos)
+
 
 stealth_scannos = (ocrfixr / "data" / "stealth_scannos.txt").read_text()
 stealth_scannos = ast.literal_eval(stealth_scannos)
+stealth = set(stealth_scannos)
 
+
+# setup symspell spellchecker parameters
+sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+dictionary_path = pkg_resources.resource_filename(
+    "symspellpy", "frequency_dictionary_en_82_765.txt")
+# term_index is the column of the term and count_index is the
+# column of the term frequency
+sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
 
 
 # Set BERT to look for the 30 most likely words in position of the misspelled word
@@ -80,7 +91,7 @@ class spellcheck:
             # add in common_scannos with leading caps (which were dropped in the token processing step)
             # add in stealth_scanno candidates (correctly spelled words that match entries in the stealth_scanno dict) - these were also dropped in the token processing step
             for i in tokens:
-                if i not in misread and i in common_scannos or i in stealth_scannos:
+                if i not in misread and i in common or i in stealth:
                     misread.append(i)
 
                 
@@ -99,8 +110,9 @@ class spellcheck:
     
     # Return the list of possible spell-check options. These will be used to look for matches against BERT context suggestions
     def __SUGGEST_SPELLCHECK(self, text):
-        textblob_suggest = Word(text).spellcheck()
-        suggested_words = [x[0] for x in textblob_suggest]  # textblob outputs a list of tuples - extract only the first part of the 2 element tuple (suggestion , percentage)
+        suggested_words = []
+        for i in sym_spell.lookup(text, Verbosity.CLOSEST, max_edit_distance=2):
+            suggested_words.append(getattr(i, "term"))
         return(suggested_words)
         
     
@@ -204,12 +216,12 @@ class spellcheck:
         # for each misread, get all spellcheck suggestions
         for i in misreads:
             # if misread is a common scanno, then add that entry to a separate dict that will be merged back in later. This bypasses the BERT check step.
-            if self.common_scannos == "T" and i in common_scannos:
+            if self.common_scannos == "T" and i in common:
                 add_scanno = dict((k, v) for k, v in common_scannos.items() if k in i)
                 additional_changes.update(add_scanno)
             
             # for stealth scannos - these are valid (yet incorrect) words. So, instead of SUGGEST_SPELLCHECK (which would return the same word supplied), take the value from the stealth_scanno dict, which is the desired word to check for in BERT context (arid --> and)
-            elif self.common_scannos == "T" and i in stealth_scannos:
+            elif self.common_scannos == "T" and i in stealth:
                 SC.append(stealth_scannos.get(i).split(" "))
                 mask.append(self.__SET_MASK(i,'[MASK]', self.text))
             
@@ -341,15 +353,14 @@ class spellcheck:
                 return(final_text)
 
 
+# TODO - prevent single letter/number replacement suggestions (see Keynes book for examples). This was introduced in the upgrade to symspellpy
 # TODO - make tkinter play nicely with CLI python
 # TODO - can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
-# TODO - spellcheck is getting slow (unit test > 1 second for a multi-mistake sentence) - optimize steps to boost speed
 # TODO - add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
 # TODO - likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
-# TODO - add top_k feature, which allows user to broaden the acceptable BERT context check. So, for higher k value, less-likely context candidates are included, increasing the number of fix suggestions but also possibly false positives (this is most useful in combination with using interactive review)
 # TODO - need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 # TODO - check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
-
+    # should be able to leverage symspells compound lookup for this!
 
 # Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph
 # Note: OCRfixr ignores all words with leading uppercasing, as these are assumed to be proper nouns, which fall outside of the scope of what this approach can accomplish.
