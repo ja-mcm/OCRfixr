@@ -23,8 +23,14 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("Hello, I'm a maile model.")._LIST_MISREADS(), ['maile'])
         self.assertEqual(spellcheck("'I'm not sure', Adam said. 'I can't see it. The wind-n\ow is half-shut.'")._LIST_MISREADS(), [])
         self.assertEqual(spellcheck("income which represented the capital.1 And the")._LIST_MISREADS(), [])
-    
-    
+        self.assertEqual(spellcheck("the nature both of the plan and purpose of his work8.")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("iron, &c. As I could not detect")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("571. (16) If lighted by a spiritual sun")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("been, that it violates certain axioms above stated, (18,) which have been")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("been, that it violates certain axioms above stated, (ee) which have been")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck('333.   “The Journal du Magnetisme of the 10th of March, 1853, had')._LIST_MISREADS(), [])
+
+
     def test_ignore_words(self):
        self.assertEqual(spellcheck("I don't understand your aceent", ignore_words = ['aceent'])._LIST_MISREADS(), [])
        self.assertEqual(spellcheck("I don't understand your aceent")._LIST_MISREADS(), ['aceent'])
@@ -48,9 +54,9 @@ class TestStringMethods(unittest.TestCase):
         
         
     def test_common_scannos(self):
-        self.assertEqual(spellcheck("tle", common_scannos = "T").fix(), "the")
-        self.assertEqual(spellcheck("Tle", common_scannos = "T").fix(), "The")
-        self.assertEqual(spellcheck("the context makes no sense to help iito fix this scanno", common_scannos = "T").fix(), "the context makes no sense to help into fix this scanno")
+        self.assertEqual(spellcheck("tle").fix(), "the")
+        self.assertEqual(spellcheck("Tlie").fix(), "The")
+        self.assertEqual(spellcheck("the context makes no sense to help iito fix this scanno").fix(), "the context makes no sense to help into fix this scanno")
 
 
     def test_stealth_scannos(self):

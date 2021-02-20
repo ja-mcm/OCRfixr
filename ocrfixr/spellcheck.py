@@ -22,6 +22,9 @@ stealth_scannos = (ocrfixr / "data" / "stealth_scannos.txt").read_text()
 stealth_scannos = ast.literal_eval(stealth_scannos)
 stealth = set(stealth_scannos)
 
+ignore_misreads = (ocrfixr / "data" / "ignore_these.txt").read_text().split()
+ignore_set_from_pkg = set(ignore_misreads)
+
 
 # setup symspell spellchecker parameters
 sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
@@ -46,19 +49,17 @@ class spellcheck:
         self.common_scannos = common_scannos
         self.top_k = top_k
 
-
         
 ### DEFINE ALL HELPER FUNCTIONS
 # ------------------------------------------------------
-# Find all mispelled words in a passage.
-
+    
     def _SPLIT_PARAGRAPHS(self, text):
         # Separate string into paragraphs - this keeps local context for BERT, just in smaller chunks 
         # If needed, split up excessively long paragraphs - BERT model errors out when >512 words, so break long paragraphs at 500 words
         tokens = re.findall('[^\n]+\n{0,}|(?:\w+\s+[^\n]){500}',text)
         return(tokens)
 
-    
+    # Find all mispelled words in a passage.
     def _LIST_MISREADS(self):
         tokens = re.split("[ \n]", self.text)
         tokens = [l.strip() for l in tokens] 
@@ -70,21 +71,24 @@ class spellcheck:
 
         no_hyphens = re.compile(".*-.*|.*'.*|[0-9]+")
         no_caps = re.compile('[^A-Z][a-z0-9]{1,}')
-        no_footnotes = re.compile('.*[0-9]{1,}[\]|)]?$')
+        no_footnotes = re.compile('.*[0-9]{1,}[^A-z]?$')
+        no_list_items = re.compile('.*\\)|.*\\]')
+        all_nums = re.compile('^[0-9]{1,}$')
 
-        words = [x for x in tokens if not no_hyphens.match(x) and no_caps.match(x) and not no_footnotes.match(x) and len(x) > 1]
+        words = [x for x in tokens if not no_hyphens.match(x) and no_caps.match(x) and not no_footnotes.match(x) and not no_list_items.match(x)]
 
         # then, remove punct from each remaining token (such as trailing commas, periods, quotations ('' & ""), but KEEPING contractions). 
         no_punctuation = [l.strip(string.punctuation) for l in words]
-        words_to_check = no_punctuation
+        words_to_check = [x for x in no_punctuation if len(x) > 1 and not all_nums.match(x)]
         
-        # Add ignore_words to valid word list
-        full_word_set = word_set.union(set(self.ignore_words))
         
-        # if a word is not in the SCOWL 70 word list (or the user-supplied ignore_words), it is assumed to be a misspelling.
+        # if a word is not in the SCOWL 70 word list, it is assumed to be a misspelling.
+        # also allows for user to specify terms to NOT look at (for example, known slang in the text) = ignore_set_from_user, plus ignore_set_from_pkg, a small set of problematic terms that aren't "words", but are ignored by default (example: th, as in "7 th")
+        ignore_set_from_user = set(self.ignore_words)
+        
         misread = []
         for i in words_to_check:
-            if i not in full_word_set:
+            if i not in word_set and i not in ignore_set_from_pkg and i not in ignore_set_from_user:
                 misread.append(i)
 
         # add scannos to misreads, if option is selected        
@@ -157,7 +161,7 @@ class spellcheck:
     
     
     def ___INSERT_NEWLINES(self, string):
-        return(re.sub("([^\n]{64})", "\\1\n", string, 0, re.DOTALL))
+        return(re.sub("([^\n]{64})([^\s]{1,})", "\\1\\2\n", string, 0, re.DOTALL))
     
     
     def _CREATE_DIALOGUE(self, context, old_word, new_word):
