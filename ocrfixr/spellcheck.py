@@ -3,6 +3,7 @@ import re
 import string
 import ast
 import importlib_resources
+from collections import Counter
 from transformers import pipeline
 from symspellpy import SymSpell, Verbosity
 import pkg_resources
@@ -106,6 +107,11 @@ class spellcheck:
             
         return(misread)
 
+
+    def _CT_MISREADS(self):
+        all_misreads = Counter(self._LIST_MISREADS())
+        multi_misreads = { k: v for k, v in all_misreads.items() if v > 2 }
+        return(multi_misreads)
         
     
     # Return the list of possible spell-check options. These will be used to look for matches against BERT context suggestions
@@ -323,9 +329,10 @@ class spellcheck:
 
     # Final OCR contextual spellchecker
     def fix(self):
+            
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k).SINGLE_STRING_FIX())  
+                open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k).SINGLE_STRING_FIX())          
         
         if self.changes_by_paragraph == "T":
             open_list = list(filter(None, open_list))
@@ -344,9 +351,10 @@ class spellcheck:
             if self.return_fixes == "T":
                 # collapse all spell corrections into a single dict
                 fixes = [x[1] for x in open_list]
-                word_changes = dict(j for i in fixes for j in i.items())
+                word_changes = list(j for i in fixes for j in i.items()) 
+                counts = dict(Counter(word_changes))
                 # package up corrected text with the dict of word changes
-                full_results = [final_text, word_changes]
+                full_results = [final_text, counts]
                 return(full_results)
             else:
                 return(final_text)

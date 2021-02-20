@@ -47,10 +47,10 @@ By default, OCRfixr only returns the original string, with all changes incorpora
 'The birds flew south'
 ```
 
-Use __return_fixes__ to also include all corrections made to the text:
+Use __return_fixes__ to also include all corrections made to the text, with associated counts for each:
 ```python
 >>> spellcheck(text, return_fixes = "T").fix()
-['The birds flew south', {'flevv': 'flew'}]
+['The birds flew south', {("flevv","flew"):1}]
 ```
 
 For longer texts, use __changes_by_paragraph__ to show each change in local context. This will only display the paragraphs that had updates made to them, for ease of review: 

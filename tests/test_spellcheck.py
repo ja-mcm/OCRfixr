@@ -65,8 +65,8 @@ class TestStringMethods(unittest.TestCase):
 
 
     def test_return_fixes_flag(self):
-        self.assertEqual(spellcheck("The birds flevv down\n south",return_fixes = "T").fix(), ["The birds flew down\n south",{"flevv":"flew"}])
-        self.assertEqual(spellcheck("The birds flevv down\n south and were quikly apprehended",return_fixes = "T").fix(), ["The birds flew down\n south and were quickly apprehended",{"flevv":"flew", "quikly":"quickly"}])
+        self.assertEqual(spellcheck("The birds flevv down\n south",return_fixes = "T").fix(), ["The birds flew down\n south",{("flevv","flew"):1}])
+        self.assertEqual(spellcheck("The birds flevv down\n south and were quikly apprehended",return_fixes = "T").fix(), ["The birds flew down\n south and were quickly apprehended",{("flevv","flew"):1, ("quikly","quickly"):1}])
 
 
     def test_changes_by_paragraph_flag(self):
