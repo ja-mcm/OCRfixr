@@ -357,6 +357,7 @@ class spellcheck:
                 fixes = [x[1] for x in open_list]
                 word_changes = list(j for i in fixes for j in i.items()) 
                 counts = dict(Counter(word_changes))
+                counts = dict(sorted(counts.items(), key=lambda item: -item[1]))
                 # package up corrected text with the dict of word changes
                 full_results = [final_text, counts]
                 return(full_results)
@@ -369,7 +370,7 @@ class spellcheck:
 # TODO - (CLI_DIALOGUE_BOX) make tkinter play nicely with CLI python
 # TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
 # TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
-# TODO - (FIX_MASHED WORDS) check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
+# TODO - (FIX_MASHED_WORDS) check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
     # should be able to leverage symspells compound lookup for this!
 
 # Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph

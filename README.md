@@ -1,7 +1,7 @@
 # OCRfixr
 
 ## OVERVIEW 
-This project aims to automate the boring work of manually correcting OCR output from Distributed Proofreaders' book digitization projects
+This project aims to automate the challenging work of manually correcting OCR output from Distributed Proofreaders' book digitization projects
 
 
 ## 1) CORRECTING MISREADS
@@ -95,30 +95,6 @@ By design, OCRfixr is change-averse:
 
 Word context is drawn from all sentences in the current paragraph, to maximize available information, while also not bogging down the BERT model. 
 
-
-
-## 2) UNSPLITTING WORDS
-Sometimes, books split words across lines with a hyphen. These need to be correctly pieced back together into a single word before a new line is started.
-
-To glue words back together that are split across lines, OCRfixr checks the hyphenated word against the same word list to see if the newly reunited halves created a valid word, along with a few other rules. OCRfixr then decides if the split word needs that hyphen or not.
-
-By default, OCRfixr only returns the original string, with all changes incorporated:
-```bash
->>> from ocrfixr import unsplit
-
->>> text = "He saw the red pirogue, adrift and afire in the mid-\ndle of the river!"
->>> print(text)
-'He saw the red pirogue, adrift and afire in the mid-
-dle of the river!'
-
->>> print(unsplit(text).fix())
-'He saw the red pirogue, adrift and afire in the middle
-of the river!
-```
-
-As before, use __return_fixes__ to also include all corrections made to the text.
-
-This method does not use __changes_by_paragraph__, as unsplit is rules-based rather than context-specific. There is no paragraph-specific context window. 
 
 
 ## Credits
