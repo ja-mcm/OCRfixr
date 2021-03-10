@@ -1,10 +1,10 @@
 # OCRfixr
 
 ## OVERVIEW 
-This project aims to automate the challenging work of manually correcting OCR output from Distributed Proofreaders' book digitization projects
+This project aims to help automate the challenging work of manually correcting OCR output from Distributed Proofreaders' book digitization projects
 
 
-## 1) CORRECTING MISREADS
+## Correcting OCR Misreads
 OCRs can sometimes mistake similar-looking characters when scanning a book. For example, "l" and "1" are easily confused, potentially causing the OCR to misread the word "learn" as "1earn".
 
 As written in book: 
@@ -102,4 +102,4 @@ Word context is drawn from all sentences in the current paragraph, to maximize a
 - __symspellpy__ powers spellcheck suggestions
 - __transformers__ does the heavy lifting for BERT context modelling. 
 - SCOWL word list is Copyright 2000-2019 by Kevin Atkinson.
-- All book data comes from Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>
+- This project was created to help Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>
