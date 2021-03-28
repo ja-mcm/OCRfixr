@@ -1,3 +1,5 @@
+<img src=https://img.shields.io/badge/Python-3.6%7C3.7%7C38-blue alt="python versions supported">
+
 # OCRfixr
 
 ## OVERVIEW 
