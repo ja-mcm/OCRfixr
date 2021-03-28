@@ -1,4 +1,4 @@
-<img src=https://img.shields.io/badge/Python-3.6%7C3.7%7C38-blue alt="python versions supported">
+<img src=https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue alt="python versions supported">
 
 # OCRfixr
 
