@@ -29,6 +29,8 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("been, that it violates certain axioms above stated, (18,) which have been")._LIST_MISREADS(), [])
         self.assertEqual(spellcheck("been, that it violates certain axioms above stated, (ee) which have been")._LIST_MISREADS(), [])
         self.assertEqual(spellcheck('333.   “The Journal du Magnetisme of the 10th of March, 1853, had')._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck('Be kept open, soft, and tender.” She talked')._LIST_MISREADS(), [])
+
 
 
     def test_ignore_words(self):

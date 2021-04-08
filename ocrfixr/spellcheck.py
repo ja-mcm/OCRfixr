@@ -69,7 +69,7 @@ class spellcheck:
         # Also, drop all words with trailing numbers flanked by punctuation, indicating a footnote reference (money.4, item[1]) rather than a misspelling
         # Also, drop any 1-character "words" 
 
-        no_hyphens = re.compile(".*-.*|.*'.*|[0-9]+")
+        no_hyphens = re.compile(".*-.*|.*'.*|.*’.*|[0-9]+")
         no_caps = re.compile('[^A-Z][a-z0-9]{1,}')
         no_footnotes = re.compile('.*[0-9]{1,}[^A-z]?$')
         no_list_items = re.compile('.*\\)|.*\\]')
@@ -78,7 +78,7 @@ class spellcheck:
         words = [x for x in tokens if not no_hyphens.match(x) and no_caps.match(x) and not no_footnotes.match(x) and not no_list_items.match(x)]
 
         # then, remove punct from each remaining token (such as trailing commas, periods, quotations ('' & ""), but KEEPING contractions). 
-        no_punctuation = [l.strip(string.punctuation) for l in words]
+        no_punctuation = [l.strip(string.punctuation+"”“’‘") for l in words]
         words_to_check = [x for x in no_punctuation if len(x) > 1 and not all_nums.match(x)]
         
         

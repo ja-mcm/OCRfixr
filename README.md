@@ -70,7 +70,7 @@ _(Note: OCRfixr resets its BERT context window at the start of each new paragrap
 OCRfixr also has an option for the user to interactively accept/reject suggested changes to the text:
 
 ```python
->>> text = "The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents"
+>>> text = "The birds flevv down\n south, but were quikly apprehended\n by border patrol agents"
 >>> spellcheck(text, interactive = "T").fix()
 ```
 
