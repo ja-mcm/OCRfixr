@@ -2,6 +2,7 @@
 import re
 import string
 import ast
+import fuzzy
 import importlib_resources
 from collections import Counter
 from transformers import pipeline
@@ -37,6 +38,9 @@ sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
 
 # Set BERT to look for the 30 most likely words in position of the misspelled word
 unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=30)
+
+# Create SOUNDEX comparison
+soundex = fuzzy.Soundex(4)
 
 
 class spellcheck:                       
@@ -262,15 +266,26 @@ class spellcheck:
         while x < len(bert):
             overlap = set(bert[x]) & set(SC[x])
             corr.append(overlap)
-            # if there is a single word that is both in context and pyspellcheck - update with that word
+            # if there is a single word that is both in context and symspellpy - update with that word
             if len(overlap) == 1:
                 corr[x] = self.__LIST_TO_STR(corr[x])                
             # if no overlapping candidates OR > 1 candidate, keep misread as is
             else:
                 corr[x] = ""
             x = x+1
-    
+            
+            
         fixes = dict(zip(misreads, corr))
+        
+        # Check whether the find-replace candidate is a homophone - these suggestions are ignored, to avoid flagging intentional (stylistic) homophones (ie. without / widout)
+        try:
+            for key, value in fixes.copy().items():
+                if soundex(key) == soundex(value):
+                    del fixes[key]
+        # If soundex can't parse the character, just skip the check
+        except Exception:
+            pass
+                
         fixes.update(common_scanno_fixes)
     
     
@@ -324,8 +339,11 @@ class spellcheck:
             fixes = self._FIND_REPLACEMENTS(misreads)
             correction = self._MULTI_REPLACE(fixes)
             # for any text that has no updates, remove from changes_by_paragraph output
-            if self.changes_by_paragraph == "T" and len(fixes) == 0:
-                full_results = []
+            if self.changes_by_paragraph == "T":
+                if len(fixes) == 0:
+                    full_results = []
+                else:
+                    full_results = ["Suggest " + str(list(fixes.values())) + " for " + str(list(fixes.keys()))]
             else:    
                 full_results = [correction, fixes]
             return(full_results)

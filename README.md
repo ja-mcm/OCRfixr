@@ -93,6 +93,7 @@ By design, OCRfixr is change-averse:
 - If spellcheck/context do not line up, no update is made.
 - Likewise, if there is >1 word that lines up for spellcheck/context, no update is made.
 - Only the top 15 context suggestions are considered, to limit low-probability matches.
+- If the suggestion is a homophone of the original word, it is ignored. These are assumed to be 'stylistic' or phonetic misspellings (original: coupla --> suggestion: couple)
 - Proper nouns (anything starting with a capital letter) are not evaluated for spelling.
 
 Word context is drawn from all sentences in the current paragraph, to maximize available information, while also not bogging down the BERT model. 
