@@ -2,11 +2,11 @@
 import re
 import string
 import ast
-import fuzzy
 import importlib_resources
 from collections import Counter
 from transformers import pipeline
 from symspellpy import SymSpell, Verbosity
+from metaphone import doublemetaphone
 import pkg_resources
 
 
@@ -39,12 +39,9 @@ sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
 # Set BERT to look for the 30 most likely words in position of the misspelled word
 unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=30)
 
-# Create SOUNDEX comparison
-soundex = fuzzy.Soundex(4)
-
 
 class spellcheck:                       
-    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15, check_if_slang = "T"):
         self.text = text
         self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
@@ -52,6 +49,7 @@ class spellcheck:
         self.interactive = interactive
         self.common_scannos = common_scannos
         self.top_k = top_k
+        self.check_if_slang = check_if_slang
 
         
 ### DEFINE ALL HELPER FUNCTIONS
@@ -220,7 +218,7 @@ class spellcheck:
         content.rowconfigure(1, weight=1)
         
         root.mainloop()
-        
+
         
     # Creates a dict of valid replacements for misspellings. If bert and pyspellcheck do not have a match for a given misspelling, it makes no changes to the word.
     # When common_scannos is activated, that limited list of words bypass the spellcheck/context check
@@ -277,14 +275,22 @@ class spellcheck:
             
         fixes = dict(zip(misreads, corr))
         
-        # Check whether the find-replace candidate is a homophone - these suggestions are ignored, to avoid flagging intentional (stylistic) homophones (ie. without / widout)
-        try:
-            for key, value in fixes.copy().items():
-                if soundex(key) == soundex(value):
-                    del fixes[key]
-        # If soundex can't parse the character, just skip the check
-        except Exception:
-            pass
+        if self.check_if_slang == "T":
+            try:
+                for key, value in fixes.copy().items():
+                    # if it's a simple "remove an 's' from the end", (kissings --> kissing) then delete that fix
+                    if value + "s" == key:
+                        del fixes[key]
+                    # if it's an o -> e ending fix, ignore the soundex check
+                    elif key[len(key)-1] == "o" and value[len(value)-1] == "e":
+                        pass
+                    # Check whether the find-replace candidate is a homophone - these suggestions are ignored, to avoid flagging intentional (stylistic) homophones (ie. without / widout)
+                    # soundex check = double metaphone
+                    elif doublemetaphone(key)[0] == doublemetaphone(value)[0]:
+                        del fixes[key]
+            # If soundex can't parse the character, just skip the check
+            except Exception:
+                pass
                 
         fixes.update(common_scanno_fixes)
     
@@ -354,7 +360,7 @@ class spellcheck:
             
         open_list = []
         for i in self._SPLIT_PARAGRAPHS(self.text):
-                open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k).SINGLE_STRING_FIX())          
+                open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, check_if_slang= self.check_if_slang).SINGLE_STRING_FIX())          
         
         if self.changes_by_paragraph == "T":
             open_list = list(filter(None, open_list))

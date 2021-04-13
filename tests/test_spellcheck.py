@@ -74,11 +74,11 @@ class TestStringMethods(unittest.TestCase):
 
     def test_return_fixes_flag(self):
         self.assertEqual(spellcheck("The birds flevv down\n south",return_fixes = "T").fix(), ["The birds flew down\n south",{("flevv","flew"):1}])
-        self.assertEqual(spellcheck("The birds flevv down\n south and were quikly apprehended",return_fixes = "T").fix(), ["The birds flew down\n south and were quickly apprehended",{("flevv","flew"):1, ("quikly","quickly"):1}])
+        self.assertEqual(spellcheck("The birds flevv down\n south and wefe quickly apprehended",return_fixes = "T").fix(), ["The birds flew down\n south and were quickly apprehended",{("flevv","flew"):1, ("wefe","were"):1}])
 
 
     def test_changes_by_paragraph_flag(self):
-        self.assertEqual(spellcheck("The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents", changes_by_paragraph = "T").fix(), [["The birds flew down\n",{"flevv":"flew"}], [" south, but were quickly apprehended\n", {"bvt":"but", "wefe":"were"}]])
+        self.assertEqual(spellcheck("The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents", changes_by_paragraph = "T").fix(), [["Suggest ['flew'] for ['flevv']"],["Suggest ['but', 'were'] for ['bvt', 'wefe']"]])
         # Case - no misspells in the text
         self.assertEqual(spellcheck("by border patrol agents", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
         # Case - misspell in the text, but no replacement
@@ -91,6 +91,11 @@ class TestStringMethods(unittest.TestCase):
 
     def test_fixes_multiple_errors(self):
         self.assertEqual(spellcheck("I hope yov will f1nd all the rnistakes in this sentence. Otherwise, I wlll be very sad.").fix(), "I hope you will find all the rnistakes in this sentence. Otherwise, I will be very sad.")
+
+
+    def test_disregards_homophones(self):
+        self.assertEqual(spellcheck("yuh? You’ll be all right. You’re jist like I was when I begun").fix(), "yuh? You’ll be all right. You’re jist like I was when I begun")
+        self.assertEqual(spellcheck("It is suggested that these words may bo misapprehended. I use them in the sense", return_fixes = "T").fix(), "It is suggested that these words may be misapprehended. I use them in the sense")
 
 
     def test_spellcheck_speed_acceptable(self):

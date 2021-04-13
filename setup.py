@@ -22,7 +22,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6, <3.9',
-    install_requires=['transformers', 'symspellpy', 'tensorflow>=2.0', 'importlib_resources', 'fuzzy'],
+    install_requires=['transformers', 'symspellpy', 'tensorflow>=2.0', 'importlib_resources', 'metaphone'],
     license="GNU General Public License v3",
     keywords=['ocrfixr','spellcheck', 'OCR', 'contextual', 'BERT'],
     url='https://github.com/ja-mcm/ocrfixr',
