@@ -362,7 +362,7 @@ class spellcheck:
                 if len(fixes) == 0:
                     full_results = []
                 else:
-                    full_results = ["Suggest " + str(list(fixes.values())) + " for " + str(list(fixes.keys()))]
+                    full_results = ['Suggest {0} for {1}'.format(str(list(fixes.values())), str(list(fixes.keys())))]
             else:    
                 full_results = [correction, fixes]
             return(full_results)
@@ -372,8 +372,11 @@ class spellcheck:
     def fix(self):
             
         open_list = []
+        
+        # run spellcheck against each paragraph separately
         for i in self._SPLIT_PARAGRAPHS(self.text):
-                open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, check_if_slang= self.check_if_slang).SINGLE_STRING_FIX())          
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, check_if_slang= self.check_if_slang).SINGLE_STRING_FIX())          
+
         
         if self.changes_by_paragraph == "T":
             open_list = list(filter(None, open_list))

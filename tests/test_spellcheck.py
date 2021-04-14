@@ -32,7 +32,6 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck('Be kept open, soft, and tender.” She talked')._LIST_MISREADS(), [])
 
 
-
     def test_ignore_words(self):
        self.assertEqual(spellcheck("I don't understand your aceent", ignore_words = ['aceent'])._LIST_MISREADS(), [])
        self.assertEqual(spellcheck("I don't understand your aceent")._LIST_MISREADS(), ['aceent'])
@@ -43,7 +42,7 @@ class TestStringMethods(unittest.TestCase):
 
 
     def test_finds_easy_errors(self):
-        self.assertEqual(spellcheck("cut the shiit").fix(), "cut the shit")
+        self.assertEqual(spellcheck("cut the sh1t").fix(), "cut the shit")
         self.assertEqual(spellcheck("The birds flevv south").fix(), "The birds flew south")
 
 
@@ -83,10 +82,6 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("by border patrol agents", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
         # Case - misspell in the text, but no replacement
         self.assertEqual(spellcheck("In fact, the effect of circine on the human body\n'", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
-    
-        
-    def test_spellcheck_contains_uppercase(self):
-        self.assertEqual(spellcheck("He falls ilL.").fix(), "He falls ill.")
 
 
     def test_fixes_multiple_errors(self):
@@ -94,8 +89,12 @@ class TestStringMethods(unittest.TestCase):
 
 
     def test_disregards_homophones(self):
-        self.assertEqual(spellcheck("yuh? You’ll be all right. You’re jist like I was when I begun").fix(), "yuh? You’ll be all right. You’re jist like I was when I begun")
-        self.assertEqual(spellcheck("It is suggested that these words may bo misapprehended. I use them in the sense", return_fixes = "T").fix(), "It is suggested that these words may be misapprehended. I use them in the sense")
+        # does not change homophone just --> jist
+        self.assertEqual(spellcheck("yuh? You’ll be all right. You’re jist like I was when I begun", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
+        # changes o --> e suggestions (an exception to the homophone rule)
+        self.assertEqual(spellcheck("It is suggested that these words may bo misapprehended. I use them in the sense", changes_by_paragraph = "T").fix(), [["Suggest ['be'] for ['bo']"]])
+        # does not change suggestions that match manually defined "bad" suggestions 
+        self.assertEqual(spellcheck("and over dere you will see the house", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
 
 
     def test_spellcheck_speed_acceptable(self):
