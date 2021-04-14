@@ -10,22 +10,30 @@ from metaphone import doublemetaphone
 import pkg_resources
 
 
+### Load in project resources
+# Full word list
 ocrfixr = importlib_resources.files("ocrfixr")
 word_set = (ocrfixr / "data" / "SCOWL_70.txt").read_text().split()
 word_set = set(word_set)
 
-common_scannos = (ocrfixr / "data" / "common_scannos.txt").read_text()
+# List of words NOT in SCOWL 70 that we should ignore anyways
+ignore_misreads = (ocrfixr / "data" / "ignore_these_misspells.txt").read_text().split()
+ignore_set_from_pkg = set(ignore_misreads)
+
+# dict of common scannos to check for (bypasses the context check, since these are clear mappings)
+common_scannos = (ocrfixr / "data" / "scannos_common.txt").read_text()
 common_scannos = ast.literal_eval(common_scannos)
 common = set(common_scannos)
 
-
-stealth_scannos = (ocrfixr / "data" / "stealth_scannos.txt").read_text()
+# dict of specifically tricky scannos to check for (bypasses the context check, since these are clear mappings)
+stealth_scannos = (ocrfixr / "data" / "scannos_stealth.txt").read_text()
 stealth_scannos = ast.literal_eval(stealth_scannos)
 stealth = set(stealth_scannos)
 
-ignore_misreads = (ocrfixr / "data" / "ignore_these.txt").read_text().split()
-ignore_set_from_pkg = set(ignore_misreads)
-
+# dict of OCRfixr suggestions that are known to be bad. This list prevents them from ever being suggested.
+ignore_suggestions = (ocrfixr / "data" / "ignore_these_suggestions.txt").read_text()
+ignore_suggestions = ast.literal_eval(ignore_suggestions)
+#ignore_suggestions = set(ignore_suggestions)
 
 # setup symspell spellchecker parameters
 sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
@@ -296,10 +304,15 @@ class spellcheck:
     
     
         # Remove all dict entries where replacement is same as initial problematic text
-        keys = [k for k, v in fixes.items() if k == v]
-        for x in keys:
+        no_change = [k for k, v in fixes.items() if k == v]
+        for x in no_change:
             del fixes[x]
                 
+        # Remove all dict entries that are in the list of known bad suggestions
+        overlap = dict(fixes.items() & ignore_suggestions.items())
+        for x in overlap:
+            del fixes[x]
+        
             
         if self.interactive == "T":
             # Remove all dict entries with "" values (ie. no suggested change) --- this cleans up the suggestions the user sees
