@@ -362,7 +362,10 @@ class spellcheck:
                 if len(fixes) == 0:
                     full_results = []
                 else:
-                    full_results = ['Suggest {0} for {1}'.format(str(list(fixes.values())), str(list(fixes.keys())))]
+                    key, val = next(iter(fixes.items()))
+                    txt = re.sub('^[0-9]+: ', '', self.text)
+                    loc = txt.find(key) - 1
+                    full_results = ['{0} Suggest \'{1}\' for \'{2}\''.format(loc, val, key)]
             else:    
                 full_results = [correction, fixes]
             return(full_results)
@@ -383,7 +386,7 @@ class spellcheck:
             if len(open_list) == 0:
                 return("NOTE: No changes made to text")
             else:
-                return(open_list)
+                return('\n'.join(sum(open_list, [])))
         else:
             # collapse all corrected paragraphs
             corrections = [x[0] for x in open_list]

@@ -55,14 +55,6 @@ Use __return_fixes__ to also include all corrections made to the text, with asso
 ['The birds flew south', {("flevv","flew"):1}]
 ```
 
-For longer texts, use __changes_by_paragraph__ to show each change in local context. This will only display the paragraphs that had updates made to them, for ease of review: 
-```python
->>> text = "The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents"
->>> spellcheck(text, changes_by_paragraph = "T").fix()
-[["The birds flew down\n",{"flevv":"flew"}], 
-[" south, but were quickly apprehended\n", {"bvt":"but", "wefe":"were"}]]
-```
-
 _(Note: OCRfixr resets its BERT context window at the start of each new paragraph, so splitting by paragraph may be a useful debug feature)_
 
 
@@ -70,7 +62,7 @@ _(Note: OCRfixr resets its BERT context window at the start of each new paragrap
 OCRfixr also has an option for the user to interactively accept/reject suggested changes to the text:
 
 ```python
->>> text = "The birds flevv down\n south, but were quikly apprehended\n by border patrol agents"
+>>> text = "The birds flevv down\n south, but wefe quickly apprehended\n by border patrol agents"
 >>> spellcheck(text, interactive = "T").fix()
 ```
 
@@ -78,11 +70,11 @@ OCRfixr also has an option for the user to interactively accept/reject suggested
 
 Each suggestion provides the local context around the garbled text, so that the user can determine if the suggestion fits.
 
-<img width="723" alt="Suggestion 2" src="https://user-images.githubusercontent.com/67446041/107133306-da409680-68b4-11eb-8a4c-69a8e034775c.png">
+<<img width="723" alt="Suggestion 2" src="https://user-images.githubusercontent.com/67446041/115068768-af7c4b00-9ec0-11eb-9c7a-65b518718ec4.png">>
 
 ```python
->>> ### User accepts change to "flevv", but rejects change to "quikly" in GUI
-'The birds flew down\n south and were quikly apprehended'
+>>> ### User accepts change to "flevv", but rejects change to "wefe" in GUI
+'The birds flew down\n south, but wefe quickly apprehended\n by border patrol agents'
 ```
 
 This returns the text with all accepted changes reflected. All rejected suggestions are left as-is in the text.
@@ -93,7 +85,7 @@ By design, OCRfixr is change-averse:
 - If spellcheck/context do not line up, no update is made.
 - Likewise, if there is >1 word that lines up for spellcheck/context, no update is made.
 - Only the top 15 context suggestions are considered, to limit low-probability matches.
-- If the suggestion is a homophone of the original word, it is ignored. These are assumed to be 'stylistic' or phonetic misspellings (original: coupla --> suggestion: couple)
+- If the suggestion is a homophone of the original word, it is ignored  (original: coupla --> suggestion: couple). These are assumed to be 'stylistic' or phonetic misspellings
 - Proper nouns (anything starting with a capital letter) are not evaluated for spelling.
 
 Word context is drawn from all sentences in the current paragraph, to maximize available information, while also not bogging down the BERT model. 
