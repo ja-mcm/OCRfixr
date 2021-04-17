@@ -49,7 +49,7 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=30)
 
 
 class spellcheck:                       
-    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15, check_if_slang = "T"):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15, check_if_slang = "T", return_context = "F"):
         self.text = text
         self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
@@ -58,6 +58,7 @@ class spellcheck:
         self.common_scannos = common_scannos
         self.top_k = top_k
         self.check_if_slang = check_if_slang
+        self.return_context = return_context
 
         
 ### DEFINE ALL HELPER FUNCTIONS
@@ -365,7 +366,10 @@ class spellcheck:
                     key, val = next(iter(fixes.items()))
                     txt = re.sub('^[0-9]+: ', '', self.text)
                     loc = txt.find(key) - 1
-                    full_results = ['{0} Suggest \'{1}\' for \'{2}\''.format(loc, val, key)]
+                    if self.return_context == "T":
+                        full_results = ['{0} Suggest \'{1}\' for \'{2}\' | {3}'.format(loc, val, key, self.text)]
+                    else:
+                        full_results = ['{0} Suggest \'{1}\' for \'{2}\''.format(loc, val, key)]
             else:    
                 full_results = [correction, fixes]
             return(full_results)
@@ -378,7 +382,7 @@ class spellcheck:
         
         # run spellcheck against each paragraph separately
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, check_if_slang= self.check_if_slang).SINGLE_STRING_FIX())          
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, check_if_slang= self.check_if_slang, return_context = self.return_context).SINGLE_STRING_FIX())          
 
         
         if self.changes_by_paragraph == "T":
