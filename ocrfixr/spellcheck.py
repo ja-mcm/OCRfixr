@@ -411,16 +411,17 @@ class spellcheck:
             else:
                 return(final_text)
 
-
-# TODO - (IGNORE_ALL) add branch to interactive menu which would follow up any suggestions ignored and ask user if they want to Ignore All (for any misspell occurring >2 times in the text)
-# TODO - (UPDATE_ALL) likewise, add branch to interactive menu which would follow up any accepted suggestions that are in the common_scannos list (for any misspell occurring >2 times in the text)
-# TODO - (CLI_DIALOGUE_BOX) make tkinter play nicely with CLI python
-# TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker? (+ associate warning)?
+# TODO - (ADD_DICTS) Need to add selectable foreign language dictionaries 
+# TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr
+# TOOD - (ADD_IGNORES) Need to add additional recurrning bad suggestions to Ignore list, based on running OCRfixr on a wide sample of books
+# TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
+# TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker? (+ associated warning)?
 # TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 # TODO - (FIX_MASHED_WORDS) check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
     # should be able to leverage symspells compound lookup for this!
 
 # Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph
 # Note: OCRfixr ignores all words with leading uppercasing, as these are assumed to be proper nouns, which fall outside of the scope of what this approach can accomplish.
+
 
        
