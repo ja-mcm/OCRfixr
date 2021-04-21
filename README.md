@@ -70,7 +70,7 @@ OCRfixr also has an option for the user to interactively accept/reject suggested
 
 Each suggestion provides the local context around the garbled text, so that the user can determine if the suggestion fits.
 
-<<img width="723" alt="Suggestion 2" src="https://user-images.githubusercontent.com/67446041/115068768-af7c4b00-9ec0-11eb-9c7a-65b518718ec4.png">>
+<img width="723" alt="Suggestion 2" src="https://user-images.githubusercontent.com/67446041/115068768-af7c4b00-9ec0-11eb-9c7a-65b518718ec4.png">
 
 ```python
 >>> ### User accepts change to "flevv", but rejects change to "wefe" in GUI
@@ -88,7 +88,7 @@ By design, OCRfixr is change-averse:
 - If the suggestion is a homophone of the original word, it is ignored  (original: coupla --> suggestion: couple). These are assumed to be 'stylistic' or phonetic misspellings
 - Proper nouns (anything starting with a capital letter) are not evaluated for spelling.
 
-Word context is drawn from all sentences in the current paragraph, to maximize available information, while also not bogging down the BERT model. 
+Word context is drawn from all sentences in the current paragraph (designated by a '\n'), to maximize available information, while also not bogging down the BERT model. 
 
 
 

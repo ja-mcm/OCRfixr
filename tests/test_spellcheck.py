@@ -77,7 +77,7 @@ class TestStringMethods(unittest.TestCase):
 
 
     def test_changes_by_paragraph_flag(self):
-        self.assertEqual(spellcheck("The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents", changes_by_paragraph = "T").fix(), [["Suggest ['flew'] for ['flevv']"],["Suggest ['but', 'were'] for ['bvt', 'wefe']"]])
+        self.assertEqual(spellcheck("The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents", changes_by_paragraph = "T").fix(), "9 Suggest 'flew' for 'flevv'\n7 Suggest 'but' for 'bvt'")
         # Case - no misspells in the text
         self.assertEqual(spellcheck("by border patrol agents", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
         # Case - misspell in the text, but no replacement
@@ -92,7 +92,7 @@ class TestStringMethods(unittest.TestCase):
         # does not change homophone just --> jist
         self.assertEqual(spellcheck("yuh? You’ll be all right. You’re jist like I was when I begun", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
         # changes o --> e suggestions (an exception to the homophone rule)
-        self.assertEqual(spellcheck("It is suggested that these words may bo misapprehended. I use them in the sense", changes_by_paragraph = "T").fix(), [["Suggest ['be'] for ['bo']"]])
+        self.assertEqual(spellcheck("It is suggested that these words may bo misapprehended. I use them in the sense", changes_by_paragraph = "T").fix(), "36 Suggest 'be' for 'bo'")
         # does not change suggestions that match manually defined "bad" suggestions 
         self.assertEqual(spellcheck("and over dere you will see the house", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
 
