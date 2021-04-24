@@ -49,7 +49,7 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=30)
 
 
 class spellcheck:                       
-    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15, check_if_slang = "T", return_context = "F"):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15, return_context = "F"):
         self.text = text
         self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
@@ -57,7 +57,6 @@ class spellcheck:
         self.interactive = interactive
         self.common_scannos = common_scannos
         self.top_k = top_k
-        self.check_if_slang = check_if_slang
         self.return_context = return_context
 
         
@@ -284,22 +283,21 @@ class spellcheck:
             
         fixes = dict(zip(misreads, corr))
         
-        if self.check_if_slang == "T":
-            try:
-                for key, value in fixes.copy().items():
-                    # if it's a simple "remove an 's' from the end", (kissings --> kissing) then delete that fix
-                    if value + "s" == key:
-                        del fixes[key]
-                    # if it's an o -> e ending fix, ignore the soundex check
-                    elif key[len(key)-1] == "o" and value[len(value)-1] == "e":
-                        pass
-                    # Check whether the find-replace candidate is a homophone - these suggestions are ignored, to avoid flagging intentional (stylistic) homophones (ie. without / widout)
-                    # soundex check = double metaphone
-                    elif doublemetaphone(key)[0] == doublemetaphone(value)[0]:
-                        del fixes[key]
-            # If soundex can't parse the character, just skip the check
-            except Exception:
-                pass
+        try:
+            for key, value in fixes.copy().items():
+                # if it's a simple "remove an 's' from the end", (kissings --> kissing) then delete that fix
+                if value + "s" == key:
+                    del fixes[key]
+                # if it's an o -> e ending fix, ignore the soundex check
+                elif key[len(key)-1] == "o" and value[len(value)-1] == "e":
+                    pass
+                # Check whether the find-replace candidate is a homophone - these suggestions are ignored, to avoid flagging intentional (stylistic) homophones (ie. without / widout)
+                # soundex check = double metaphone
+                elif doublemetaphone(key)[0] == doublemetaphone(value)[0]:
+                    del fixes[key]
+        # If soundex can't parse the character, just skip the check
+        except Exception:
+            pass
                 
         fixes.update(common_scanno_fixes)
     
@@ -382,7 +380,7 @@ class spellcheck:
         
         # run spellcheck against each paragraph separately
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, check_if_slang= self.check_if_slang, return_context = self.return_context).SINGLE_STRING_FIX())          
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, return_context = self.return_context).SINGLE_STRING_FIX())          
 
         
         if self.changes_by_paragraph == "T":
@@ -411,9 +409,10 @@ class spellcheck:
             else:
                 return(final_text)
 
+# TODO - (FULL_PARAGRAPHS) Need to allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context)
 # TODO - (ADD_DICTS) Need to add selectable foreign language dictionaries 
 # TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr
-# TOOD - (ADD_IGNORES) Need to add additional recurrning bad suggestions to Ignore list, based on running OCRfixr on a wide sample of books
+# TODO - (ADD_IGNORES) Need to add additional recurrning bad suggestions to Ignore list, based on running OCRfixr on a wide sample of books
 # TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
 # TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker? (+ associated warning)?
 # TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
