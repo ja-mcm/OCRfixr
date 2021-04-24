@@ -1,4 +1,6 @@
 """Main module."""
+from transformers import logging
+logging.set_verbosity_error()
 import re
 import string
 import ast
@@ -361,13 +363,15 @@ class spellcheck:
                 if len(fixes) == 0:
                     full_results = []
                 else:
-                    key, val = next(iter(fixes.items()))
-                    txt = re.sub('^[0-9]+: ', '', self.text)
-                    loc = txt.find(key) - 1
-                    if self.return_context == "T":
-                        full_results = ['{0} Suggest \'{1}\' for \'{2}\' | {3}'.format(loc, val, key, self.text)]
-                    else:
-                        full_results = ['{0} Suggest \'{1}\' for \'{2}\''.format(loc, val, key)]
+                    full_results = []
+                    # TODO - Need to make this iterate through all items in the fixes dict (currently only does the first)
+                    for key, value in fixes.items():    
+                        txt = re.sub('^[0-9]+: ', '', self.text)
+                        loc = txt.find(key) - 1
+                        if self.return_context == "T":
+                            full_results.append('{0} Suggest \'{1}\' for \'{2}\' | {3}'.format(loc, value, key, self.text))
+                        else:
+                            full_results.append('{0} Suggest \'{1}\' for \'{2}\''.format(loc, value, key))
             else:    
                 full_results = [correction, fixes]
             return(full_results)
@@ -414,7 +418,7 @@ class spellcheck:
 # TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr
 # TODO - (ADD_IGNORES) Need to add additional recurrning bad suggestions to Ignore list, based on running OCRfixr on a wide sample of books
 # TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
-# TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker? (+ associated warning)?
+# TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker?
 # TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 # TODO - (FIX_MASHED_WORDS) check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
     # should be able to leverage symspells compound lookup for this!

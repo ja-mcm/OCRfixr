@@ -82,6 +82,8 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("by border patrol agents", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
         # Case - misspell in the text, but no replacement
         self.assertEqual(spellcheck("In fact, the effect of circine on the human body\n'", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
+        # Case - multiple fixes in a single line
+        self.assertEqual(spellcheck("I hope yov will f1nd all the rnistakes in this sentence. Otherwise, I wlll be very sad.", changes_by_paragraph = "T").fix(), "6 Suggest 'you' for 'yov'\n15 Suggest 'find' for 'f1nd'\n69 Suggest 'will' for 'wlll'")
 
 
     def test_fixes_multiple_errors(self):
