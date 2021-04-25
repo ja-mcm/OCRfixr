@@ -241,7 +241,7 @@ class spellcheck:
         for i in misreads:
             # if misread is a common scanno, then add that entry to a separate dict that will be merged back in later. This bypasses the BERT check step.
             if self.common_scannos == "T" and i in common:
-                add_scanno = dict((k, v) for k, v in common_scannos.items() if k in i)
+                add_scanno = dict((k, v) for k, v in common_scannos.items() if k == i)
                 common_scanno_fixes.update(add_scanno)
             
             # for stealth scannos - these are valid (yet incorrect) words. So, instead of SUGGEST_SPELLCHECK (which would return the same word supplied), take the value from the stealth_scanno dict, which is the desired word to check for in BERT context (arid --> and)
@@ -253,7 +253,7 @@ class spellcheck:
             # for all other unrecognized words, get all spellcheck suggestions from textblob
             else:
                 spellcheck = self.__SUGGEST_SPELLCHECK(i)
-                # Make sure there is a valid spellcheck suggestion (textBlob returns the original string if not)
+                # Make sure there is a valid spellcheck suggestion (symspell returns the original string if not)
                 if spellcheck == i:
                     # if none, remove from misreads (ie. dont bother checking BERT context - it won't get used)
                     misreads.delete(i)
@@ -300,7 +300,8 @@ class spellcheck:
         # If soundex can't parse the character, just skip the check
         except Exception:
             pass
-                
+          
+        # Add the common scannos to the mix
         fixes.update(common_scanno_fixes)
     
     
@@ -412,6 +413,9 @@ class spellcheck:
                 return(full_results)
             else:
                 return(final_text)
+
+
+
 
 # TODO - (FULL_PARAGRAPHS) Need to allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context)
 # TODO - (ADD_DICTS) Need to add selectable foreign language dictionaries 

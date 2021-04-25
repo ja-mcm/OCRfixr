@@ -31,6 +31,7 @@ Since there is match for both a plausible spellcheck replacement and that word r
 Corrected text:
 > _"Days there were when small trade came to the __store__. Then the young clerk read._"
 
+For very common scanning errors where it is clear what the word should have been (ex: 'onlv' --> 'only'), OCRfixr skips the context check and relies solely on a static mapping of common corrections. This helps to maximize the number of successful edits.
 
 ### Using OCRfixr
 
@@ -95,6 +96,7 @@ Word context is drawn from all sentences in the current paragraph (designated by
 ## Credits
 
 - __symspellpy__ powers spellcheck suggestions
-- __transformers__ does the heavy lifting for BERT context modelling. 
-- SCOWL word list is Copyright 2000-2019 by Kevin Atkinson.
-- This project was created to help Distributed Proofreaders. Support them here: <https://www.pgdp.net/c/>
+- __transformers__ does the heavy lifting for BERT context modelling
+- __DataMunging__ provided a very useful list of common scanning errors 
+- __SCOWL__ word list is Copyright 2000-2019 by Kevin Atkinson.
+- This project was created to help __Distributed Proofreaders__. Support them here: <https://www.pgdp.net/c/>
