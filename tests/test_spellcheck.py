@@ -100,6 +100,14 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("and over dere you will see the house", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
 
 
+    def test_fixes_mashed_words(self):
+        self.assertEqual(spellcheck("It seemed a long time as we sat there in the darkness waiting for the train; but it was perhaps, in fact, less than half anhour.", changes_by_paragraph = "T").fix(), "120 Suggest 'an hour' for 'anhour'")
+        # Catches 1 of 2
+        self.assertEqual(spellcheck("happened in such manner that the rumourof itspread throughout", changes_by_paragraph = "T").fix(), "41 Suggest 'it spread' for 'itspread'")
+        # Doesnt separate this one - that's ok
+        self.assertEqual(spellcheck("here, when it was about two hours of the night, a.little more", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
+
+
     def test_spellcheck_speed_acceptable(self):
         # GOALS
         # 0 misspells = < 0.01 seconds  [V1.3 = 0.0025s]
@@ -109,17 +117,6 @@ class TestStringMethods(unittest.TestCase):
         self.assertLessEqual(time_func(sc,"He falls ilL."), 0.2) 
         self.assertLessEqual(time_func(sc,"I hope yov will f1nd all the rnistakes in this sentence. Otherwise, I wlll be very sad."), 1)
 
-# TODO
-
-# MASHUPS
-# This one currently fails - OCRfixr sometimes mis-handles mashed up words
-#    def test_fixes_mashed_words(self):
-#       self.assertEqual(spellcheck("It seemed a long time as we sat there in the darkness waiting for the train; but it was perhaps, in fact, less than half anhour.").fix(), "It seemed a long time as we sat there in the darkness waiting for the train; but it was perhaps, in fact, less than half an hour.")
-
-# EXTRA SPACES
-# This one currently fails - OCRfixr doesn't see the relevant character due to the extra space, and duplicates it
-#    def test_fixes_extra_spaces(self):
-#       self.assertEqual(spellcheck("But suppose I spare your lif e--will you help me to escape?").fix(), "But suppose I spare your life--will you help me to escape?")
 
 
 if __name__ == '__main__':

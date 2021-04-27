@@ -133,10 +133,23 @@ class spellcheck:
     # Return the list of possible spell-check options. These will be used to look for matches against BERT context suggestions
     def __SUGGEST_SPELLCHECK(self, text):
         suggested_words = []
-        for i in sym_spell.lookup(text, Verbosity.CLOSEST, max_edit_distance=2):
-            term = getattr(i, "term")
-            if len(term) > 1:
-                suggested_words.append(term)
+        
+        # Confirm word isn't a mashup ("anhour" --> "an hour")
+        Num_spaces = []
+        for i in sym_spell.lookup_compound(text, max_edit_distance=0):
+            Num_spaces.append(getattr(i, "term"))
+
+        # If it is not flagged as a possible mashup, then ask for plausible replacement words for the full misspelled word                
+        if str(Num_spaces).count(' ') == 0:
+            for i in sym_spell.lookup(text, Verbosity.CLOSEST, max_edit_distance=2):
+                term = getattr(i, "term")
+                if len(term) > 1:
+                    suggested_words.append(term)
+        
+        # If symspell suggests that the misspell should actually be be 2 words, then pass the multi-word phrase
+        else:
+            suggested_words.append(Num_spaces.pop())
+            
         return(suggested_words)
         
     
@@ -230,7 +243,7 @@ class spellcheck:
         root.mainloop()
 
         
-    # Creates a dict of valid replacements for misspellings. If bert and pyspellcheck do not have a match for a given misspelling, it makes no changes to the word.
+    # Creates a dict of valid replacements for misspellings. If bert and symspell do not have a match for a given misspelling, it makes no changes to the word.
     # When common_scannos is activated, that limited list of words bypass the spellcheck/context check
     def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
@@ -250,18 +263,34 @@ class spellcheck:
                 bert.append(self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
                                                 number_to_return = self.top_k))
             
-            # for all other unrecognized words, get all spellcheck suggestions from textblob
+            # for all other unrecognized words, get all spellcheck suggestions from symspell
             else:
                 spellcheck = self.__SUGGEST_SPELLCHECK(i)
                 # Make sure there is a valid spellcheck suggestion (symspell returns the original string if not)
                 if spellcheck == i:
-                    # if none, remove from misreads (ie. dont bother checking BERT context - it won't get used)
+                    # if no spellcheck suggestion given, remove from misreads (ie. dont bother checking BERT context - it won't get used)
                     misreads.delete(i)
-                else:
-                    # otherwise, do the spellcheck + context check
-                    SC.append(spellcheck)
-                    bert.append(self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
-                                                    number_to_return = self.top_k))
+                else: 
+                    # tee up symspell suggestion for comparison to BERT suggestion
+                    SC.append(spellcheck)  
+                    
+                    # For multi-word phrases, the BERT context check will feed in the first word into the text, then confirm whether second word fits the context of the sentence. If so, the two word phrase will be accepted as a valid correction
+                    if len(spellcheck) == 1 and str(spellcheck).count(' ') == 1:
+                        mw = ''.join(spellcheck)
+                        fw = re.findall("^[^\s]+", mw).pop()
+                        SB = self.__SUGGEST_BERT(text = self.__SET_MASK(i, fw + ' [MASK]', self.text), 
+                                                        number_to_return = self.top_k)     
+                        # Tack the first word onto the results for each BERT context suggestion. These are compared against the multi-word phrase provided by sympell
+                        SBi = []
+                        for i in SB:
+                            SBi.append(fw + ' ' + i )
+                        
+                        bert.append(SBi)
+
+                    else:    
+                        # otherwise, just mask the misspelled word for BERT context check, which will be compared against symspell
+                        bert.append(self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
+                                                        number_to_return = self.top_k))
     
         # then, see if spellcheck & bert overlap
         # if they do, set that value for the find-replace dict
@@ -290,8 +319,11 @@ class spellcheck:
                 # if it's a simple "remove an 's' from the end", (kissings --> kissing) then delete that fix
                 if value + "s" == key:
                     del fixes[key]
-                # if it's an o -> e ending fix, ignore the soundex check
+                # if it's an o -> e ending fix (bo --> be), ignore the soundex check
                 elif key[len(key)-1] == "o" and value[len(value)-1] == "e":
+                    pass
+                # ignore soundex check for mashups (anhour --> an hour). Found by looking for a space (' ') in the replacement suggestion                
+                elif value.count(' ') == 1:
                     pass
                 # Check whether the find-replace candidate is a homophone - these suggestions are ignored, to avoid flagging intentional (stylistic) homophones (ie. without / widout)
                 # soundex check = double metaphone
@@ -420,12 +452,15 @@ class spellcheck:
 # TODO - (FULL_PARAGRAPHS) Need to allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context)
 # TODO - (ADD_DICTS) Need to add selectable foreign language dictionaries 
 # TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr
-# TODO - (ADD_IGNORES) Need to add additional recurrning bad suggestions to Ignore list, based on running OCRfixr on a wide sample of books
-# TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
-# TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker?
-# TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 # TODO - (FIX_MASHED_WORDS) check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
     # should be able to leverage symspells compound lookup for this!
+# TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
+# TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker?
+    # pipelines = 7 secs
+    # symspellpy dictionary load = 3 seconds
+# TODO - (ADD_IGNORES) Need to add additional recurring bad suggestions to Ignore list, based on running OCRfixr on a wide sample of books
+# TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
+
 
 # Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph
 # Note: OCRfixr ignores all words with leading uppercasing, as these are assumed to be proper nouns, which fall outside of the scope of what this approach can accomplish.
