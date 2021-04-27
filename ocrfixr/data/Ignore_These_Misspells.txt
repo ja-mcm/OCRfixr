@@ -6,6 +6,8 @@ De
 de
 Des
 des
+Das
+das
 Ing
 ing
 Le
@@ -22,3 +24,11 @@ il
 Il
 Je
 je
+Es 
+es
+En
+en
+Und
+und
+Et
+et

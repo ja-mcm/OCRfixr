@@ -31,7 +31,7 @@ Since there is match for both a plausible spellcheck replacement and that word r
 Corrected text:
 > _"Days there were when small trade came to the __store__. Then the young clerk read._"
 
-For very common scanning errors where it is clear what the word should have been (ex: 'onlv' --> 'only'), OCRfixr skips the context check and relies solely on a static mapping of common corrections. This helps to maximize the number of successful edits.
+For very common scanning errors where it is clear what the word should have been (ex: 'onlv' --> 'only'), OCRfixr skips the context check and relies solely on a static mapping of common corrections. This helps to maximize the number of successful edits \& decrease compute time. (You can disable this by setting common_scannos to "F").
 
 ### Using OCRfixr
 
