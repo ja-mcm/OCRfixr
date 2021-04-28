@@ -102,6 +102,11 @@ class TestStringMethods(unittest.TestCase):
 
     def test_fixes_mashed_words(self):
         self.assertEqual(spellcheck("It seemed a long time as we sat there in the darkness waiting for the train; but it was perhaps, in fact, less than half anhour.", changes_by_paragraph = "T").fix(), "120 Suggest 'an hour' for 'anhour'")
+        # If theres a comma, keep it when separating words
+        self.assertEqual(spellcheck("entrance in another large circuit,which all the churches have;", changes_by_paragraph = "T").fix(), "25 Suggest 'circuit, which' for 'circuit,which'")
+        self.assertEqual(spellcheck("counted them,/and there were eighty of a side, in very good", changes_by_paragraph = "T").fix(), "7 Suggest 'them, and' for 'them,/and'")
+        # Dont retain other punctuation
+        self.assertEqual(spellcheck("Jorge d'Abreu and Lopo da Gama went by.order of the", changes_by_paragraph = "T").fix(), "35 Suggest 'by order' for 'by.order'")
         # Catches 1 of 2
         self.assertEqual(spellcheck("happened in such manner that the rumourof itspread throughout", changes_by_paragraph = "T").fix(), "41 Suggest 'it spread' for 'itspread'")
         # Doesnt separate this one - that's ok

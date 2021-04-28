@@ -51,7 +51,7 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased', top_k=30)
 
 
 class spellcheck:                       
-    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15, return_context = "F"):
+    def __init__(self, text, changes_by_paragraph = "F", return_fixes = "F", ignore_words = None, interactive = "F", common_scannos = "T", top_k = 15, return_context = "F", suggest_unsplit = "T"):
         self.text = text
         self.changes_by_paragraph = changes_by_paragraph
         self.return_fixes = return_fixes
@@ -60,6 +60,8 @@ class spellcheck:
         self.common_scannos = common_scannos
         self.top_k = top_k
         self.return_context = return_context
+        self.suggest_unsplit = suggest_unsplit
+
 
         
 ### DEFINE ALL HELPER FUNCTIONS
@@ -148,7 +150,12 @@ class spellcheck:
         
         # If symspell suggests that the misspell should actually be be 2 words, then pass the multi-word phrase
         else:
-            suggested_words.append(Num_spaces.pop())
+            mw = Num_spaces.pop()
+            
+            # If the mashup has a comma in it, add a comma to the suggestion
+            if "," in text:
+                mw = re.sub(" ", ", ", mw)
+            suggested_words.append(mw)
             
         return(suggested_words)
         
@@ -275,15 +282,16 @@ class spellcheck:
                     SC.append(spellcheck)  
                     
                     # For multi-word phrases, the BERT context check will feed in the first word into the text, then confirm whether second word fits the context of the sentence. If so, the two word phrase will be accepted as a valid correction
-                    if len(spellcheck) == 1 and str(spellcheck).count(' ') == 1:
+                    if self.suggest_unsplit == "T" and len(spellcheck) == 1 and str(spellcheck).count(' ') == 1:
                         mw = ''.join(spellcheck)
                         fw = re.findall("^[^\s]+", mw).pop()
                         SB = self.__SUGGEST_BERT(text = self.__SET_MASK(i, fw + ' [MASK]', self.text), 
-                                                        number_to_return = self.top_k)     
+                                                        number_to_return = self.top_k)   
+                        
                         # Tack the first word onto the results for each BERT context suggestion. These are compared against the multi-word phrase provided by sympell
                         SBi = []
-                        for i in SB:
-                            SBi.append(fw + ' ' + i )
+                        for x in SB:
+                            SBi.append(fw + ' ' + x)
                         
                         bert.append(SBi)
 
@@ -417,7 +425,7 @@ class spellcheck:
         
         # run spellcheck against each paragraph separately
         for i in self._SPLIT_PARAGRAPHS(self.text):
-            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, return_context = self.return_context).SINGLE_STRING_FIX())          
+            open_list.append(spellcheck(i,changes_by_paragraph= self.changes_by_paragraph, interactive = self.interactive, common_scannos = self.common_scannos, top_k = self.top_k, return_context = self.return_context, suggest_unsplit = self.suggest_unsplit).SINGLE_STRING_FIX())          
 
         
         if self.changes_by_paragraph == "T":
@@ -452,13 +460,10 @@ class spellcheck:
 # TODO - (FULL_PARAGRAPHS) Need to allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context)
 # TODO - (ADD_DICTS) Need to add selectable foreign language dictionaries 
 # TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr
-# TODO - (FIX_MASHED_WORDS) check for mashed up words ("anhour" --> "an hour") BEFORE concluding they are misspells -- BERT/Spellcheck really can't handle these well, as I quickly found a case where OCRfixr incorrectly changed the text   --->   Walker of the Secret Service book is a great test for this!
-    # should be able to leverage symspells compound lookup for this!
 # TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
 # TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker?
     # pipelines = 7 secs
     # symspellpy dictionary load = 3 seconds
-# TODO - (ADD_IGNORES) Need to add additional recurring bad suggestions to Ignore list, based on running OCRfixr on a wide sample of books
 # TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 
 
