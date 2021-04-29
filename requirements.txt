@@ -6,3 +6,4 @@ transformers
 Tensorflow>=2.0
 importlib_resources
 metaphone
+tqdm

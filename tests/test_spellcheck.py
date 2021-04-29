@@ -31,6 +31,9 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck('333.   “The Journal du Magnetisme of the 10th of March, 1853, had')._LIST_MISREADS(), [])
         self.assertEqual(spellcheck('Be kept open, soft, and tender.” She talked')._LIST_MISREADS(), [])
         self.assertEqual(spellcheck('of the missionaries to do this.1')._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("51, vii., 44; Coac. iii., 91, 92; II. Morb. xlv., 24-28; III. Morb.")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("And in another place he maketh mention of the")._LIST_MISREADS(), [])
+        self.assertEqual(spellcheck("direct progression from F to B or <i>vice versa</i> (the tritone) was ruled out")._LIST_MISREADS(), [])
 
 
     def test_ignore_words(self):
@@ -111,7 +114,9 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("happened in such manner that the rumourof itspread throughout", changes_by_paragraph = "T").fix(), "41 Suggest 'it spread' for 'itspread'")
         # Doesnt separate this one - that's ok
         self.assertEqual(spellcheck("here, when it was about two hours of the night, a.little more", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
-
+        
+        ### FIX NEEDED
+        #self.assertEqual(spellcheck("The Adopted Heir. One volume, paper, $1.50,· or cloth, $2.00.", changes_by_paragraph = "T").fix(),  'NOTE: No changes made to text')
 
     def test_spellcheck_speed_acceptable(self):
         # GOALS

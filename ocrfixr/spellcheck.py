@@ -86,10 +86,13 @@ class spellcheck:
         no_hyphens = re.compile(".*-.*|.*'.*|.*’.*|[0-9]+")
         no_caps = re.compile('[^A-Z][a-z0-9]{1,}')
         no_footnotes = re.compile('.*[0-9]{1,}[^A-z]?$')
+        no_roman_nums = re.compile('[xlcviXLCVI.:,-;]+$')
+        no_eth_endings = re.compile('.*eth|est$')
+        no_format_tags = re.compile('</?[a-z]>.*|.*</?[a-z]>')
         no_list_items = re.compile('.*\\)|.*\\]')
         all_nums = re.compile('^[0-9]{1,}$')
 
-        words = [x for x in tokens if not no_hyphens.match(x) and no_caps.match(x) and not no_footnotes.match(x) and not no_list_items.match(x)]
+        words = [x for x in tokens if not no_hyphens.match(x) and no_caps.match(x) and not no_footnotes.match(x) and not no_roman_nums.match(x) and not no_eth_endings.match(x) and not no_format_tags.match(x) and not no_list_items.match(x)]
 
         # then, remove punct from each remaining token (such as trailing commas, periods, quotations ('' & ""), but KEEPING contractions). 
         no_punctuation = [l.strip(string.punctuation+"”“’‘") for l in words]
