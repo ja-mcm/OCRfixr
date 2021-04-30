@@ -270,8 +270,12 @@ class spellcheck:
             # for stealth scannos - these are valid (yet incorrect) words. So, instead of SUGGEST_SPELLCHECK (which would return the same word supplied), take the value from the stealth_scanno dict, which is the desired word to check for in BERT context (arid --> and)
             elif self.common_scannos == "T" and i in stealth:
                 SC.append(stealth_scannos.get(i).split(" "))
-                bert.append(self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
-                                                number_to_return = self.top_k))
+                SB = self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
+                                                number_to_return = self.top_k)
+                
+                # if the original stealth scanno also makes sense in context, then don't record the suggestion
+                if i not in SB:
+                    bert.append(SB)
             
             # for all other unrecognized words, get all spellcheck suggestions from symspell
             else:

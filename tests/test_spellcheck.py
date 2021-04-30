@@ -65,9 +65,9 @@ class TestStringMethods(unittest.TestCase):
 
 
     def test_stealth_scannos(self):
-        self.assertEqual(spellcheck("the fox arid the hound ran round and round", common_scannos = "T").fix(), "the fox and the hound ran round and round")
-        #self.assertEqual(spellcheck("then be went to the store to buy some bread", common_scannos = "T").fix(), "then he went to the store to buy some bread")
-
+        self.assertEqual(spellcheck("the fox arid the hound ran round and round").fix(), "the fox and the hound ran round and round")
+        self.assertEqual(spellcheck("They struggled through the arid desert", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
+        #self.assertEqual(spellcheck("should he he unsuccessful in our").fix(), 'should he be unsuccessful in our') # note: we dropped he/be, as it is too unreliable & slows things down 4-5x
 
     def test_retains_paragraphs(self):
         self.assertEqual(spellcheck("The birds flevv down\n south").fix(), "The birds flew down\n south")
