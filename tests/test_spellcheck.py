@@ -81,7 +81,7 @@ class TestStringMethods(unittest.TestCase):
 
 
     def test_changes_by_paragraph_flag(self):
-        self.assertEqual(spellcheck("The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents", changes_by_paragraph = "T").fix(), "9 Suggest 'flew' for 'flevv'\n7 Suggest 'but' for 'bvt'")
+        self.assertEqual(spellcheck("The birds flevv down\n south, bvt wefe quickly apprehended\n by border patrol agents", changes_by_paragraph = "T").fix(), "9 Suggest 'flew' for 'flevv'\n7 Suggest 'but' for 'bvt'\n11 Suggest 'were' for 'wefe'")
         # Case - no misspells in the text
         self.assertEqual(spellcheck("by border patrol agents", changes_by_paragraph = "T").fix(), "NOTE: No changes made to text")
         # Case - misspell in the text, but no replacement
@@ -112,17 +112,20 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(spellcheck("Jorge d'Abreu and Lopo da Gama went by.order of the", changes_by_paragraph = "T").fix(), "35 Suggest 'by order' for 'by.order'")
         # Catches 1 of 2
         self.assertEqual(spellcheck("happened in such manner that the rumourof itspread throughout", changes_by_paragraph = "T").fix(), "41 Suggest 'it spread' for 'itspread'")
-        # Doesnt separate this one - that's ok
-        self.assertEqual(spellcheck("here, when it was about two hours of the night, a.little more", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
-        
-        ### FIX NEEDED
-        #self.assertEqual(spellcheck("The Adopted Heir. One volume, paper, $1.50,· or cloth, $2.00.", changes_by_paragraph = "T").fix(),  'NOTE: No changes made to text')
+        # splits words separated by periods/commas, as long as the words are valid
+        self.assertEqual(spellcheck("I shall.cultivate the foreign legations,' she", changes_by_paragraph = "T").fix(), "1 Suggest 'shall cultivate' for 'shall.cultivate'")
+        self.assertEqual(spellcheck("I shall.blarg the foreign legations,' she", changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
+        self.assertEqual(spellcheck("here, when it was about two hours of the night, a.little more", changes_by_paragraph = "T").fix(), "47 Suggest 'a little' for 'a.little'")
+        self.assertEqual(spellcheck('As to good and evil, beautiful and ugly...and what we ought to do and', changes_by_paragraph = "T").fix(), 'NOTE: No changes made to text')
+        # keep second word capitalized if separated by a period. Also keep the period
+        self.assertEqual(spellcheck('Here is sentence one.Here is sentence two', changes_by_paragraph = "T").fix(), "16 Suggest 'one. Here' for 'one.Here'")
+        self.assertEqual(spellcheck("The Adopted Heir. One volume, paper, $1.50,· or cloth, $2.00.", changes_by_paragraph = "T").fix(),  'NOTE: No changes made to text')
 
     def test_spellcheck_speed_acceptable(self):
         # GOALS
-        # 0 misspells = < 0.01 seconds  [V1.3 = 0.0025s]
-        # 1 misspell = < 0.10 seconds   [V1.3 = 0.070s]
-        # additional misspells "cost" the same amount of time (ie. execution scales linearly with # of misspells)  [V1.3 - this seems to hold true]
+        # 0 misspells = < 0.01 seconds  [V1.4 = 0.002s]
+        # 1 misspell = < 0.10 seconds   [V1.4 = 0.074s]
+        # additional misspells "cost" the same amount of time (ie. execution scales linearly with # of misspells)  [V1.4 - this seems to hold true]
         self.assertLessEqual(time_func(sc,"this text has no issues"), 0.01)
         self.assertLessEqual(time_func(sc,"He falls ilL."), 0.2) 
         self.assertLessEqual(time_func(sc,"I hope yov will f1nd all the rnistakes in this sentence. Otherwise, I wlll be very sad."), 1)

@@ -83,8 +83,8 @@ class spellcheck:
         # Also, drop all words with trailing numbers flanked by punctuation, indicating a footnote reference (money.4, item[1]) rather than a misspelling
         # Also, drop any 1-character "words" 
 
-        no_hyphens = re.compile(".*-.*|.*'.*|.*’.*|[0-9]+")
-        no_caps = re.compile('[^A-Z][a-z0-9]{1,}')
+        no_hyphens = re.compile(".*-.*|.*'.*|.*\.{3,}.*|.*’.*|[0-9]+")
+        no_caps = re.compile('[^A-Z]{2,}')
         no_footnotes = re.compile('.*[0-9]{1,}[^A-z]?$')
         no_roman_nums = re.compile('[xlcviXLCVI.:,-;]+$')
         no_eth_endings = re.compile('.*eth|est$')
@@ -258,6 +258,7 @@ class spellcheck:
     def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
         bert = []
+        punct_split_fixes = {}
         common_scanno_fixes = {}
         
         # for each misread, get all spellcheck suggestions
@@ -285,24 +286,49 @@ class spellcheck:
                     # if no spellcheck suggestion given, remove from misreads (ie. dont bother checking BERT context - it won't get used)
                     misreads.delete(i)
                 else: 
-                    # tee up symspell suggestion for comparison to BERT suggestion
-                    SC.append(spellcheck)  
-                    
-                    # For multi-word phrases, the BERT context check will feed in the first word into the text, then confirm whether second word fits the context of the sentence. If so, the two word phrase will be accepted as a valid correction
+                   # For multi-word phrases....
                     if self.suggest_unsplit == "T" and len(spellcheck) == 1 and str(spellcheck).count(' ') == 1:
-                        mw = ''.join(spellcheck)
-                        fw = re.findall("^[^\s]+", mw).pop()
-                        SB = self.__SUGGEST_BERT(text = self.__SET_MASK(i, fw + ' [MASK]', self.text), 
-                                                        number_to_return = self.top_k)   
                         
-                        # Tack the first word onto the results for each BERT context suggestion. These are compared against the multi-word phrase provided by sympell
-                        SBi = []
-                        for x in SB:
-                            SBi.append(fw + ' ' + x)
-                        
-                        bert.append(SBi)
+                        # if the phrase was already separated by a comma or period ("shall.cultivate"), skip the BERT context check
+                        # just confirm that both word halves are valid
+                        if "." in i or "," in i:
+                            mw = ''.join(spellcheck)                           
+                            fw = re.findall("^[^\s,]+", mw).pop()
+                            sw = re.findall("[^\s]+$", mw).pop()
+                            
+                            if fw in word_set and sw in word_set:
+                                # if first letter after period split is uppercased, retain it and add a period ('ended.He' --> 'ended. He')
+                                if len(re.findall("\.{1,}([A-Z][a-z]+)", i)) > 0:
+                                    fw = fw + '. '
+                                    sw = str.title(sw)
+                                    mw = fw + sw
+
+                                add_splitto = {i:mw}
+                                punct_split_fixes.update(add_splitto)
+
+                    
+                        # If symspell has to pick an arbitrary cutoff between the words ("anhour"), check the suggestion using BERT context
+                        # Feed in the first word into the text, then confirm whether second word fits the context of the sentence using BERT. If so, the two word phrase will be accepted as a valid correction
+                        else:
+                            # tee up symspell suggestion for comparison to BERT suggestion
+                            SC.append(spellcheck)  
+                            
+                            mw = ''.join(spellcheck)
+                            fw = re.findall("^[^\s]+", mw).pop()
+                            SB = self.__SUGGEST_BERT(text = self.__SET_MASK(i, fw + ' [MASK]', self.text), 
+                                                            number_to_return = self.top_k)   
+                            
+                            # Tack the first word onto the results for each BERT context suggestion. These are compared against the multi-word phrase provided by sympell
+                            SBi = []
+                            for x in SB:
+                                SBi.append(fw + ' ' + x)
+                            
+                            bert.append(SBi)
+                              
 
                     else:    
+                        SC.append(spellcheck)  
+
                         # otherwise, just mask the misspelled word for BERT context check, which will be compared against symspell
                         bert.append(self.__SUGGEST_BERT(text = self.__SET_MASK(i,'[MASK]', self.text), 
                                                         number_to_return = self.top_k))
@@ -350,6 +376,7 @@ class spellcheck:
           
         # Add the common scannos to the mix
         fixes.update(common_scanno_fixes)
+        fixes.update(punct_split_fixes)
     
     
         # Remove all dict entries where replacement is same as initial problematic text

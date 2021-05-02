@@ -50,6 +50,12 @@ b.c
 A.D
 a.d
 D.C
+d.c
+e.x
+e.g
+i.e
+p.m
+a.m
 fais
 peut
 autre
