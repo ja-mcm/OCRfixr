@@ -87,7 +87,7 @@ class spellcheck:
         no_caps = re.compile('[^A-Z]{2,}')
         no_footnotes = re.compile('.*[0-9]{1,}[^A-z]?$')
         no_roman_nums = re.compile('[xlcviXLCVI.:,-;]+$')
-        no_eth_endings = re.compile('.*eth|est$')
+        no_eth_endings = re.compile('.*eth|.*est$')
         no_format_tags = re.compile('</?[a-z]>.*|.*</?[a-z]>')
         no_list_items = re.compile('.*\\)|.*\\]')
         all_nums = re.compile('^[0-9]{1,}$')
@@ -100,12 +100,30 @@ class spellcheck:
         
         
         # if a word is not in the SCOWL 70 word list, it is assumed to be a misspelling.
-        # also allows for user to specify terms to NOT look at (for example, known slang in the text) = ignore_set_from_user, plus ignore_set_from_pkg, a small set of problematic terms that aren't "words", but are ignored by default (example: th, as in "7 th")
+        unrecognized = []
+        for i in words_to_check:
+            if i not in word_set:
+                unrecognized.append(i)
+        
+        
+        # throw away any paragraphs where > 30% of the words are unrecognized - this makes context-generation spotty AND likely indicates a messy post-script/footnote, or even another language. This limits trigger-happy changes to messy text.
+        L1 = len(tokens)
+        L0 = len(unrecognized)
+        if L0/L1 > 0.30 and L1 > 10:
+            unrecognized = []
+        else: 
+            unrecognized = unrecognized
+      
+        
+        # Allow user to specify terms to NOT look at (for example, known slang in the text) = ignore_set_from_user
+        # plus, remove problematic words = ignore_set_from_pkg, 
+        # this contains a small set of problematic terms that aren't "words" (example: th, as in "7 th")
+        # as well as the 2,000 most-common words in the following languages: Latin, Greek, French, German, Spanish
         ignore_set_from_user = set(self.ignore_words)
         
         misread = []
-        for i in words_to_check:
-            if i not in word_set and i not in ignore_set_from_pkg and i not in ignore_set_from_user:
+        for i in unrecognized:
+            if i not in ignore_set_from_pkg and i not in ignore_set_from_user:
                 misread.append(i)
 
         # add scannos to misreads, if option is selected        
@@ -115,16 +133,6 @@ class spellcheck:
             for i in tokens:
                 if i not in misread and i in common or i in stealth:
                     misread.append(i)
-
-                
-        L0 = len(tokens)
-        L1 = len(misread)
-        
-        # throw away any paragraphs where > 30% of the words are unrecognized - this makes context-generation spotty AND likely indicates a messy post-script/footnote, or even another language. This limits trigger-happy changes to messy text.
-        if L0 < 1:
-            misread = misread
-        elif L1/L0 > 0.30 and L0 > 10:
-            misread = []
             
         return(misread)
 
@@ -490,15 +498,14 @@ class spellcheck:
 
 
 
-
-# TODO - (FULL_PARAGRAPHS) Need to allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context)
 # TODO - (ADD_DICTS) Need to add selectable foreign language dictionaries 
+# TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 # TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr
+# TODO - (FULL_PARAGRAPHS) Need to allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context)
 # TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
 # TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker?
     # pipelines = 7 secs
     # symspellpy dictionary load = 3 seconds
-# TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
 
 
 # Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph
