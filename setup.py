@@ -13,6 +13,7 @@ setuptools.setup(
     description="A contextual spellchecker for OCR output",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    entry_points ={'console_scripts': ['ocrfixr = ocrfixr.run_ocrfixr:main']},
     packages=setuptools.find_packages(),
     package_dir={'OCRfixr': 'ocrfixr'},
     package_data={'OCRfixr': ['data/*.txt']},
