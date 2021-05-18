@@ -21,6 +21,9 @@ def main():
     parser.add_argument('-Warp10', action ='store_const', const = True,
                         default = False, dest ='Warp10',
                          help ="option to ignore the most common misspells, which are likely correct words.")
+    parser.add_argument('-context', action ='store_const', const = True,
+                        default = False, dest ='context',
+                         help ="option to add local context of suggested change.")
     
 
     args = parser.parse_args()
@@ -75,14 +78,17 @@ def main():
     
 
     else:
-        ignored_words = []    
+        ignored_words = []  
+        
+    if args.context == True:
+        context_fl = "T"
     
     ### Run spellcheck on each line ==================================================
     print("---- Running spellcheck....")
     
     suggestions = []
     for i in tqdm(q):
-        fixes = spellcheck(i, changes_by_paragraph = "T", ignore_words = ignored_words).fix()
+        fixes = spellcheck(i, changes_by_paragraph = "T", return_context = context_fl, ignore_words = ignored_words).fix()
         if fixes == "NOTE: No changes made to text":
             pass
         else:

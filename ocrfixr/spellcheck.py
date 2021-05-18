@@ -74,6 +74,7 @@ class spellcheck:
         return(tokens)
 
     # Find all mispelled words in a passage.
+    # Note: OCRfixr ignores all words with leading uppercasing (including ALL CAPS), as these are assumed to be proper nouns, which fall outside of the scope of what a dictionary-based approach can accomplish.
     def _LIST_MISREADS(self):
         tokens = re.split("[ \n]", self.text)
         tokens = [l.strip() for l in tokens] 
@@ -263,6 +264,7 @@ class spellcheck:
         
     # Creates a dict of valid replacements for misspellings. If bert and symspell do not have a match for a given misspelling, it makes no changes to the word.
     # When common_scannos is activated, that limited list of words bypass the spellcheck/context check
+    # Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph
     def _FIND_REPLACEMENTS(self, misreads):
         SC = [] 
         bert = []
@@ -447,7 +449,7 @@ class spellcheck:
                     full_results = []
                 else:
                     full_results = []
-                    # TODO - Need to make this iterate through all items in the fixes dict (currently only does the first)
+                    # iterate through all items in the fixes dict & output each suggestion in format required by GuiGuts
                     for key, value in fixes.items():    
                         txt = re.sub('^[0-9]+: ', '', self.text)
                         loc = txt.find(key) - 1
@@ -500,16 +502,14 @@ class spellcheck:
 
 # TODO - (ADD_DICTS) Need to add selectable foreign language dictionaries 
 # TODO - (IGNORE_SPLIT_WORDS) need to ignore the first word of a new page, since these can be split words across pages (this may also just be tied up in the unsplit functionality, where this word should have a leading * to denote a split word)
-# TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr
-# TODO - (FULL_PARAGRAPHS) Need to allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context)
+# TODO - (ADD_STEALTHOS) Need to add additional common stealth scannos to OCRfixr. Be mindful, as these can increase compute time hugely (eg. he/be). Shoot for words that are uncommon (arid --> and)
+# TODO - (FULL_PARAGRAPHS) Allow BERT context to draw from all lines in a full paragraph (currently resets at each newline -- this corresponds to 1 line of text in a Gutenberg text, and likely leads to degraded spellcheck performance due to loss of context). However, longer context window = slower performance
+#          > most useful case for this is when the MASKED word is the first or last word in the line
+#          > exploring the option of accepting synonyms for context words as valid spellcheck replacements (ex. "the dark, [MASK] swamp". wet --> damp)
 # TODO - (GutenBERT) fine-tune BERT model on Gutenberg texts, to improve relatedness of context suggestions
 # TODO - (WARM_UP) can we somehow negate the warm-up time for the transformers unmasker?
     # pipelines = 7 secs
     # symspellpy dictionary load = 3 seconds
-
-
-# Note: find-replace is not instance-specific, it is paragraph specific..."yov" will be replaced with "you" in all instances found in that section of text. It would be rare, but this may cause issues when a repeated scanno is valid & not valid within the same paragraph
-# Note: OCRfixr ignores all words with leading uppercasing, as these are assumed to be proper nouns, which fall outside of the scope of what this approach can accomplish.
 
 
        

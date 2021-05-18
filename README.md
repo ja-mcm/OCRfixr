@@ -80,6 +80,15 @@ Each suggestion provides the local context around the garbled text, so that the 
 
 This returns the text with all accepted changes reflected. All rejected suggestions are left as-is in the text.
 
+### Command-Line 
+OCRfixr is also callable via command-line (intended for Guiguts use):
+
+```python
+>>> ocrfixr input_text.txt output_filename.txt
+```
+
+The output file will list the line number and position of all suggested changes.
+
 
 ### Avoiding "Damn You, Autocorrect!"
 By design, OCRfixr is change-averse:
