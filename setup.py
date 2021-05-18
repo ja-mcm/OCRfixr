@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="OCRfixr",
-    version="1.4.2",
+    version="1.4.2.2",
     author="Jack McMahon",
     author_email="OCRfixr@mcmahon.work",
     description="A contextual spellchecker for OCR output",
@@ -23,7 +23,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6, <3.9',
-    install_requires=['transformers', 'symspellpy', 'tensorflow>=2.0', 'importlib_resources', 'metaphone', 'tqdm'],
+    install_requires=['transformers', 'tensorflow>=2.0', 'numpy~=1.19.2', 'symspellpy', 'importlib_resources', 'metaphone', 'tqdm'],
     license="GNU General Public License v3",
     keywords=['ocrfixr','spellcheck', 'OCR', 'contextual', 'BERT'],
     url='https://github.com/ja-mcm/ocrfixr',

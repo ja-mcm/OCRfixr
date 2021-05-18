@@ -1,9 +1,10 @@
 pip==19.2.3
 flake8==3.7.8
 
-symspellpy
+numpy~=1.19.2
 transformers
 Tensorflow>=2.0
+symspellpy
 importlib_resources
 metaphone
 tqdm
