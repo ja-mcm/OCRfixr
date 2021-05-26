@@ -19,21 +19,21 @@ word_set = (ocrfixr / "data" / "SCOWL_70.txt").read_text(encoding='utf-8').split
 word_set = set(word_set)
 
 # List of words NOT in SCOWL 70 that we should ignore anyways
-ignore_misreads = (ocrfixr / "data" / "ignore_these_misspells.txt").read_text(encoding='utf-8').split()
+ignore_misreads = (ocrfixr / "data" / "Ignore_These_Misspells.txt").read_text(encoding='utf-8').split()
 ignore_set_from_pkg = set(ignore_misreads)
 
 # dict of common scannos to check for (bypasses the context check, since these are clear mappings)
-common_scannos = (ocrfixr / "data" / "scannos_common.txt").read_text(encoding='utf-8')
+common_scannos = (ocrfixr / "data" / "Scannos_Common.txt").read_text(encoding='utf-8')
 common_scannos = ast.literal_eval(common_scannos)
 common = set(common_scannos)
 
 # dict of specifically tricky scannos to check for - misspellings that create real words (arid - and)
-stealth_scannos = (ocrfixr / "data" / "scannos_stealth.txt").read_text(encoding='utf-8')
+stealth_scannos = (ocrfixr / "data" / "Scannos_Stealth.txt").read_text(encoding='utf-8')
 stealth_scannos = ast.literal_eval(stealth_scannos)
 stealth = set(stealth_scannos)
 
 # dict of OCRfixr suggestions that are known to be bad. This list prevents them from ever being suggested.
-ignore_suggestions = (ocrfixr / "data" / "ignore_these_suggestions.txt").read_text(encoding='utf-8')
+ignore_suggestions = (ocrfixr / "data" / "Ignore_These_Suggestions.txt").read_text(encoding='utf-8')
 ignore_suggestions = ast.literal_eval(ignore_suggestions)
 #ignore_suggestions = set(ignore_suggestions)
 
