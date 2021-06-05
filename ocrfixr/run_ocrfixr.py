@@ -7,6 +7,8 @@ logging.set_verbosity_error()
 import sys
 import re
 from tqdm import tqdm
+from collections import Counter
+
 
 def main():
   
@@ -24,6 +26,9 @@ def main():
     parser.add_argument('-context', action ='store_const', const = True,
                         default = False, dest ='context',
                          help ="option to add local context of suggested change.")
+    parser.add_argument('-misspells', action ='store_const', const = True,
+                        default = False, dest ='misspells',
+                         help ="option to return all of the words OCRfixr didn't recognize.")
     
 
     args = parser.parse_args()
@@ -51,7 +56,31 @@ def main():
     for (number, line) in enumerate(data):
         q.append('%d:  %s' % (number + 1, line))
         
-     
+        
+    # Define misspells counter function
+    # Used by both -Warp10 and -misspells flags
+    def ct_misspells(text, min_len):
+        M = spellcheck(text)._LIST_MISREADS()
+        M = [word for word in M if len(word) > min_len]
+        counts = dict(Counter(M))
+        counts = dict(sorted(counts.items(), key=lambda item: -item[1]))
+        return(counts)
+
+
+    ### Misspells Option ============================================================
+    # Have OCRfixr just output a list of all the words it checked (ranked by frequency), rather than spellchecking
+    # This is intended as a diagnostic measure to see if OCRfixr is missing a large number of suggestions for valid (fixable) words
+
+    if args.misspells == True:
+        counts = ct_misspells(Full_Book,0)
+        with open(args.outfile,'w',encoding='utf-8') as f:  
+            for key, value in counts.items():  
+                f.write('%s:%s\n' % (key, value))
+        print("---- File has been written to " + sys.argv[2])
+
+        # for this path, don't continue any further
+        exit()
+        
         
     ### WARP10 Option ============================================================
     # Have OCRfixr ignore any word (>3 characters long) that pops up 10+ times
@@ -60,12 +89,7 @@ def main():
     
     if args.Warp10 == True:
         print("---- Engaging Warp10!")
-        from collections import Counter
-
-        M = spellcheck(Full_Book)._LIST_MISREADS()
-        M = [word for word in M if len(word) > 3]
-        counts = dict(Counter(M))
-        counts = dict(sorted(counts.items(), key=lambda item: -item[1]))
+        counts = ct_misspells(Full_Book,3)
         over_ten = {key:value for (key,value) in counts.items() if value >= 10}
         
         print("---- To speed things up, OCRfixr will ignore the following unrecognized words that popped up 10 or more times in the text:")
