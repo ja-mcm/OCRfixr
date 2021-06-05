@@ -32,7 +32,7 @@ def main():
     # read in full file to check if the text has split words (which will cause false misreads to show up)
     # -- do this first to throw error early if file is invalid
     print("---- Loading text....")
-    Full_Book = open(sys.argv[1], 'r').read()
+    Full_Book = open(sys.argv[1], 'r',encoding='utf-8').read()
     
     if len(re.findall("[A-z]-\n", Full_Book)) > 30:
         print("---- This file appears to have words split across lines, which can cause issues with the spellchecker")
@@ -82,6 +82,9 @@ def main():
         
     if args.context == True:
         context_fl = "T"
+    else: 
+        context_fl = "F"
+    
     
     ### Run spellcheck on each line ==================================================
     print("---- Running spellcheck....")
@@ -96,10 +99,11 @@ def main():
                 suggestions.append(''.join((' '.join(re.findall('^[0-9]+:', i)), x)))
     
 
-   ### Output file ============================================================
-    print("---- File has been written to " + sys.argv[2])
-    
-    file=open(args.outfile,'w')
+   ### Output file =================================================================
+    file=open(args.outfile,'w',encoding='utf-8')
     for items in suggestions:
         file.writelines(items+'\n')
     file.close()
+    
+    print("---- File has been written to " + sys.argv[2])
+
