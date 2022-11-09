@@ -200,7 +200,9 @@ class spellcheck:
         # otherwise, replace all dict entries with the approved replacement word
             text_corrected = self.text
             for i, j in fixes.items():
-                text_corrected = re.sub(re.escape(i), j, text_corrected)
+                # Only match and replace whole words
+                pattern = "\\b" + re.escape(i) + "\\b"
+                text_corrected = re.sub(pattern, j, text_corrected)
             return(text_corrected)
     
     
